@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debreut's Hexcrawl Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div id="logo">Debreut's Hexcrawl Manager</div>
+        <div id="toolbar">
+            <div class="menu">
+                <div class="menu-item" id="file-menu">
+                    <button class="menu-button" type="button">File</button>
+                    <div class="dropdown-menu" id="file-dropdown">
+                        <button type="button" disabled>New</button>
+                        <button type="button" disabled>Open</button>
+                        <button type="button" disabled>Save</button>
+                        <button type="button" disabled>Save As</button>
+                    </div>
+                </div>
+                <div class="menu-item" id="edit-menu">
+                    <button class="menu-button" type="button">Edit</button>
+                    <div class="dropdown-menu" id="edit-dropdown">
+                        <button type="button" disabled>Undo</button>
+                        <button type="button" disabled>Redo</button>
+                    </div>
+                </div>
+                <div class="menu-item" id="view-menu">
+                    <button class="menu-button" type="button">View</button>
+                    <div class="dropdown-menu" id="view-dropdown">
+                        <button type="button" disabled>Zoom In</button>
+                        <button type="button" disabled>Zoom Out</button>
+                        <button type="button" disabled>Reset View</button>
+                    </div>
+                </div>
+                <div class="menu-item" id="tools-menu">
+                    <button class="menu-button" type="button">Tools</button>
+                    <div class="dropdown-menu" id="tools-dropdown">
+                        <button id="geography-tool-button" type="button">Geography</button>
+                        <button type="button" disabled>Factions</button>
+                    </div>
+                </div>
+            </div>
+            <div id="messages"><!--align to the right and display success and error messages--></div>
+        </div>
+    </header>
+
+    <main>
+        <section id="map-area">
+            <!--
+                The map renderer will eventually
+                populate this container.
+
+                TODO:
+                - Hex grid renderer
+                - Map camera
+                - Hex selection
+                - Map visuals
+            -->
+        </section>
+
+        <aside id="properties-window">
+            <!-- ===== State: NONE ===== -->
+            <div id="properties-none" class="property-state" data-state="NONE">
+                <h2>No properties selected</h2>
+                <p><i>Select a hex or tool to display its properties here.</i></p>
+            </div>
+
+            <!-- ===== State: HEX INFO ===== -->
+            <div id="properties-hex-info" class="property-state" data-state="HEX_INFO">
+                <h2>Hex Info</h2>
+                <!-- TODO features:
+                - Hex coordinates
+                - Hex terrain
+                    - terrain type
+                    - roll table
+                - add/remove hex features
+                    - description
+                    - roll table
+                    - notes
+                    - faction ownership (include faction roll table)
+                    - city
+                    - landmark
+                -->
+            </div>
+
+            <!-- ===== State: HEX GRID ===== -->
+            <div id="properties-hex-grid" class="property-state" data-state="HEX_GRID">
+                <h2>Hex Grid</h2>
+                <!-- TODO features:
+                - grid type (vert point hex, horizontal point hex, square)
+                - grid size (width, height)
+                - background image (url)
+                - show icons, background colors
+                -->
+            </div>
+
+            <!-- ===== State: FACTIONS ===== -->
+            <div id="properties-factions" class="property-state" data-state="FACTIONS">
+                <h2>Factions</h2>
+                <!-- TODO features:
+                - add faction
+                    - name
+                    - border color
+                    - details (description, notes, etc.)
+                    - roll table
+                - remove faction
+                -->
+            </div>
+
+            <!-- ===== State: GEOGRAPHY ===== -->
+            <div id="properties-geography" class="property-state" data-state="GEOGRAPHY">
+                <h2>Geography</h2>
+                <p>Geography tool active.</p>
+                <button id="exit-geography-button" type="button">Exit Geography Tool</button>
+            </div>
+        </aside>
+    </main>
+
+    <footer>
+        &copy; 2026 Jeremy Barnes. All rights reserved.
+    </footer>
+
+    <script src="scripts.js"></script>
+</body>
+</html>

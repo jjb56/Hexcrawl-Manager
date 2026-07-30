@@ -1,0 +1,505 @@
+/* ===== Variables ===== */
+:root {
+    --page-bg-color: #0f172a;
+    --section-bg-color: #1f2937;
+    --section-border-color: #0f172a;
+    --faded-text-color: #94a3b8;
+    --text-color: #d1d5db;
+    --menu-hover-bg-color: #374151;
+    --selected-text-color: #22c55e;
+    --selected-bg-color: #22c55e;
+    --selected-border-color: #16a34a;
+    --delete-color: #ef4444;
+    --delete-bg-color: #b91c1c;
+    --delete-border-color: #991b1b;
+    --form-bg-color: #0f172a;
+    --form-hover-color: #253352;
+    --form-border-color: #475569;
+    --form-text-color: #f8fafc;
+    --good-message-text-color: #86efac;
+    --good-message-bg-color: #0f2d1d;
+    --good-message-border-color: #2f5236;
+    --bad-message-text-color: #fca5a5;
+    --bad-message-bg-color: #2f0f0f;
+    --bad-message-border-color: #5c1a1a;
+    --hex-border-color: #94a3b8;
+    --hex-bg-color: #334155;
+    --hex-hover-bg-color: #475569;
+    --hex-selected-border-color: #22c55e;
+    --hex-coordinate-color: #151515;
+}
+
+/* ===== Global Base ===== */
+body, html {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: consolas, monospace;
+    background-color: var(--page-bg-color);
+    color: var(--text-color);
+}
+
+/* ===== Header ===== */
+header {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0;
+    background-color: var(--page-bg-color);
+    border-bottom: 1px solid var(--section-border-color);
+}
+#logo {
+    font-size: 18px;
+    font-weight: bold;
+    white-space: nowrap;
+    padding: 0 24px;
+}
+#toolbar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: var(--section-bg-color);
+}
+#main-menu {
+    display: flex;
+    align-items: center;
+    margin-left: 16px;
+    background-color: var(--section-bg-color);
+}
+.menu-item {
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ===== Main Layout ===== */
+main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+#map-area {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background-color: var(--section-bg-color);
+    border-right: 1px solid var(--section-border-color);
+}
+#properties-window {
+    width: 300px;
+    min-width: 300px;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: var(--page-bg-color);
+}
+
+/* ===== Property States ===== */
+.property-state {
+    display: none;
+}
+.property-state.active {
+    display: block;
+    background-color: var(--section-bg-color);
+    border: 1px solid var(--section-border-color);
+}
+
+/* ===== Footer ===== */
+footer {
+    padding: 8px 16px;
+    background-color: var(--section-bg-color);
+    border-top: 1px solid var(--section-border-color);
+    text-align: center;
+    color: var(--faded-text-color);
+    font-size: 12px;
+}
+
+/* ===== Shared UI ===== */
+button {
+    font-family: inherit;
+}
+.panel {
+    background-color: var(--page-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--section-border-color);
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+/* ===== Map Renderer ===== */
+.hex {
+    position: absolute;
+    width: 70px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(
+        25% 0%,
+        75% 0%,
+        100% 50%,
+        75% 100%,
+        25% 100%,
+        0% 50%
+    );
+    background-color: var(--hex-bg-color);
+    cursor: pointer;
+    transition:
+        filter 0.1s ease,
+        transform 0.1s ease;
+}
+.hex:hover {
+    filter: brightness(1.25);
+    transform: scale(1.03);
+}
+.hex.selected {
+    outline: 4px solid var(--hex-selected-border-color);
+    outline-offset: -4px;
+    filter: brightness(1.3);
+    z-index: 10;
+}
+.terrain-icon {
+    position: absolute;
+    font-size: 24px;
+    pointer-events: none;
+}
+.faction-marker {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    font-size: 12px;
+    pointer-events: none;
+}
+.hex-coordinate {
+    position: absolute;
+    bottom: 10px;
+    font-size: 9px;
+    color: var(--hex-coordinate-color);
+    pointer-events: none;
+}
+.property-group {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--section-border-color);
+}
+.property-group strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #aaaaaa;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* ===== Hex Information Panel ===== */
+.hex-info-entry {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--form-border-color);
+}
+.hex-info-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.hex-info-entry-header strong {
+    color: var(--faded-text-color);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+.hex-info-entry p {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+.hex-info-footer {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+/* ===== Add Hex Information ===== */
+.hex-info-add {
+    margin-top: 16px;
+}
+#hex-property-select {
+    flex: 1;
+    padding: 7px 10px;
+    background-color: var(--form-bg-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+    color: var(--form-text-color);
+}
+#hex-property-select:hover {
+    background-color: var(--form-hover-color);
+}
+#add-hex-info {
+    width: 100%;
+    padding: 7px 12px;
+    background-color: var(--section-bg-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+    color: var(--form-text-color);
+    cursor: pointer;
+}
+#add-hex-info:hover {
+    background-color: var(--menu-hover-bg-color);
+}
+
+/* ===== Add Menu ===== */
+.hex-info-add-menu {
+    padding: 12px;
+    background-color: var(--menu-hover-bg-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+}
+.hex-info-add-menu > strong {
+    display: block;
+    margin-bottom: 10px;
+}
+.hex-info-add-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+.hex-info-add-options button,
+#cancel-add-hex-info {
+    padding: 7px 10px;
+    background-color: #0f172a;
+    border: 1px solid #3a3a3a;
+    border-radius: 3px;
+    color: #e0e0e0;
+    text-align: left;
+    cursor: pointer;
+}
+.hex-info-add-options button:hover,
+#cancel-add-hex-info:hover {
+    background-color: #353535;
+}
+.remove-hex-property {
+    padding: 3px 6px;
+    background: transparent;
+    border: 1px solid var(--delete-border-color);
+    border-radius: 3px;
+    color: var(--delete-color);
+    font-size: 11px;
+    cursor: pointer;
+}
+.remove-hex-property:hover {
+    background-color: var(--delete-bg-color);
+    color: var(--form-text-color);
+}
+
+/* to be organized */
+.hex-info-entry label, .property-group label {
+    display: block;
+    margin-bottom: 4px; 
+    color: var(--faded-text-color);
+    font-size: 12px;
+}
+.hex-info-entry input, .hex-info-entry textarea, .property-group input, .property-group textarea, .hex-info-entry select {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 7px 8px;
+    background-color: var(--form-bg-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+    color: var(--form-text-color);
+    font-family: inherit;
+    resize: vertical;
+}
+.hex-info-entry input:focus, .hex-info-entry textarea:focus, .property-group input:focus, .property-group textarea:focus, .hex-info-entry select:focus {
+    outline: 1px solid var(--selected-border-color);
+    border-color: var(--selected-border-color);
+}
+.menu {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.menu-item {
+    position: relative;
+}
+.menu-button {
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font: inherit;
+}
+.menu-button:hover, .menu-item.open .menu-button {
+    background-color: var(--menu-hover-bg-color);
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 150px;
+    padding: 4px;
+    background-color: var(--section-bg-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.menu-item.open .dropdown-menu {
+    display: block;
+}
+.dropdown-menu button {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+.dropdown-menu button:hover:not(:disabled) {
+    background-color: var(--menu-hover-bg-color);
+}
+.dropdown-menu button:disabled {
+    color:
+    var(--faded-text-color);
+    opacity: 0.5;
+    cursor: default;
+}
+#geography-terrain-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 1rem;
+}
+.geography-terrain {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+.geography-terrain:hover {
+    background-color: var(--menu-hover-bg-color);
+}
+.geography-terrain.selected {
+    border-color: var(--selected-border-color);
+}
+.terrain-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+}
+.terrain-editor {
+    margin: -4px 0 6px 0;
+    padding: 10px;
+    background-color: var(--section-bg-color);
+    border: 1px solid var(--selected-border-color);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.terrain-editor label {
+    color: var(--faded-text-color);
+    font-size: 0.85rem;
+}
+.terrain-editor input[type="text"], .terrain-editor input[type="color"] {
+    box-sizing: border-box;
+    width: 100%;
+}
+.terrain-editor input[type="color"] {
+    height: 32px;
+    padding: 2px;
+}
+#messages {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto; 
+    overflow: hidden;
+}
+.message {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    white-space: nowrap;
+}
+.message.success {
+    color: var(--good-message-text-color);
+    background-color: var(--good-message-bg-color);
+    border-color: var(--good-message-border-color);
+}
+.message.error {
+    color: var(--bad-message-text-color);
+    background-color: var(--bad-message-bg-color);
+    border-color: var(--bad-message-border-color);
+}
+.message.fade-out {
+    opacity: 0;
+}
+.terrain-roll-table {
+    margin-top: 1rem;
+}
+.terrain-roll-table h4 {
+    margin-bottom: 0.5rem;
+}
+#terrain-roll-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+#terrain-roll-table th, #terrain-roll-table td {
+    border: 1px solid var(--form-border-color);
+    padding: 0;
+}
+#terrain-roll-table input {
+    box-sizing: border-box;
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    padding: 0.4rem;
+}
+#terrain-roll-table th:first-child, #terrain-roll-table td:first-child {
+    width: 30%;
+}
+#add-roll-table-row {
+    margin-top: 0.5rem;
+}
+#terrain-roll-table th:last-child, #terrain-roll-table td:last-child {
+    width: 40px;
+    text-align: center;
+}
+.delete-roll-row {
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem;
+}

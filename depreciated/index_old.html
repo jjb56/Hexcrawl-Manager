@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Debreut's Hexcrawl Manager</title>
+	<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Debreut's Hexcrawl Manager</h1>
+        </div>
+
+        <div class="toolbar">
+            <div class="menu">
+                <button class="menu-button">File</button>
+                <div class="menu-content">
+                    <a href="#" data-action="new">New <span class="shortcut">Ctrl+N</span></a>
+                    <a href="#" data-action="open">Open <span class="shortcut">Ctrl+O</span></a>
+                    <a href="#" data-action="save">Save <span class="shortcut">Ctrl+S</span></a>
+                </div>
+            </div>
+            |
+            <div class="menu">
+                <button class="menu-button">Edit</button>
+                <div class="menu-content">
+                    <a href="#" data-action="undo">Undo <span class="shortcut">Ctrl+Z</span></a>
+                    <a href="#" data-action="redo">Redo <span class="shortcut">Ctrl+Y</span></a>
+                </div>
+            </div>
+            |
+            <div class="menu">
+                <button class="menu-button">View</button>
+                <div class="menu-content">
+                    <a href="#" data-action="zoom-in">Zoom In <span class="shortcut">Ctrl+=</span></a>
+                    <a href="#" data-action="zoom-out">Zoom Out <span class="shortcut">Ctrl+-</span></a>
+                </div>
+            </div>
+            |
+            <div class="menu">
+                <button class="menu-button">Campaign</button>
+                <div class="menu-content">
+                    <a href="#" data-action="campaign-grid">Grid Type</a>
+                    <a href="#" data-action="campaign-geography">Geography</a>
+                    <a href="#" data-action="campaign-factions">Factions</a>
+                </div>
+            </div>
+            |
+            <div class="menu">
+                <button class="menu-button">Help</button>
+                <div class="menu-content">
+                    <a href="#" data-action="about">About <span class="shortcut">F1</span></a>
+                </div>
+            </div>
+            <div id="status" class="status">Ready</div>
+        </div>
+
+        <div class="hexMap">
+            <svg id="grid" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <div class="sidebar">
+            <div id="cell-info-panel" class="cell-info">
+                <h2>Properties</h2>
+                <div id="selection-state" class="selection-state">
+                    <p class="helper-text">Nothing selected.</p>
+                </div>
+                <div id="selection-details" hidden>
+                    <p><strong>Coordinates: </strong><span id="cell-x">-</span>, <span id="cell-y">-</span></p>
+                    <p><label for="terrain">Terrain: </label><select id="terrain"></select></p>
+                    <p><label for="owner">Faction: </label><select id="owner"></select></p>
+                </div>
+            </div>
+
+            <div id="campaign-panel" class="campaign-panel">
+                <h2>Campaign</h2>
+                <div class="campaign-tabs">
+                    <button class="campaign-tab active" type="button" data-panel="grid">Grid Type</button>
+                    <button class="campaign-tab" type="button" data-panel="geography">Geography</button>
+                    <button class="campaign-tab" type="button" data-panel="factions">Factions</button>
+                </div>
+
+                <div class="campaign-section active" id="campaign-grid">
+                    <div class="option-group">
+                        <label><input type="radio" name="grid-mode" value="hex-horizontal" checked> Horizontal hexes</label>
+                        <label><input type="radio" name="grid-mode" value="hex-vertical"> Vertical hexes</label>
+                        <label><input type="radio" name="grid-mode" value="square"> Square grid</label>
+                    </div>
+                    <label class="inline-field" for="square-ratio">Square ratio</label>
+                    <input id="square-ratio" type="number" min="0.5" max="2" step="0.1" value="1">
+                    <button id="apply-square-grid" type="button">Apply grid settings</button>
+                </div>
+
+                <div class="campaign-section" id="campaign-geography">
+                    <label for="new-terrain">New geography</label>
+                    <div class="inline-controls">
+                        <input id="new-terrain" type="text" placeholder="e.g. Swamp">
+                        <button id="add-terrain" type="button">Add</button>
+                    </div>
+                    <ul id="terrain-list" class="entry-list"></ul>
+                </div>
+
+                <div class="campaign-section" id="campaign-factions">
+                    <label for="new-faction">New faction</label>
+                    <div class="inline-controls">
+                        <input id="new-faction" type="text" placeholder="e.g. House Raven">
+                        <button id="add-faction" type="button">Add</button>
+                    </div>
+                    <ul id="faction-list" class="entry-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 Debreut. All rights reserved.
+        </div>
+    </div>
+	
+	<script src="script.js"></script>
+</body>
+</html>
