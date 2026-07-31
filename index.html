@@ -8,16 +8,20 @@
 </head>
 <body>
     <header>
-        <div id="logo">Debreut's Hexcrawl Manager</div>
+        <div id="logobar">
+            <div id="logo">Debreut's Hexcrawl Manager</div>
+            <div id="file-name"></div>
+            <div id="other-buttons"></div>
+        </div>
         <div id="toolbar">
             <div class="menu">
                 <div class="menu-item" id="file-menu">
                     <button class="menu-button" type="button">File</button>
                     <div class="dropdown-menu" id="file-dropdown">
-                        <button type="button" disabled>New</button>
-                        <button type="button" disabled>Open</button>
-                        <button type="button" disabled>Save</button>
-                        <button type="button" disabled>Save As</button>
+                        <button id="file-new-button" type="button">New</button>
+                        <button id="file-open-button" type="button">Open</button>
+                        <button id="file-save-button" type="button">Save</button>
+                        <button id="file-save-as-button" type="button">Save As</button>
                     </div>
                 </div>
                 <div class="menu-item" id="edit-menu">
@@ -123,6 +127,7 @@
         &copy; 2026 Jeremy Barnes. All rights reserved.
     </footer>
 
+    <input id="file-input" type="file" accept=".json" hidden>
     <script src="scripts.js"></script>
 </body>
 </html>

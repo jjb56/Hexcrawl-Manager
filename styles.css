@@ -46,17 +46,26 @@ body {
 /* ===== Header ===== */
 header {
     display: flex;
-    align-items: center;
-    min-height: 32px;
+    flex-direction: column;
+    align-items: left;
     padding: 0;
     background-color: var(--page-bg-color);
     border-bottom: 1px solid var(--section-border-color);
+}
+#logobar {
+    display: flex;
+    flex-direction: row;
 }
 #logo {
     font-size: 18px;
     font-weight: bold;
     white-space: nowrap;
-    padding: 0 24px;
+    padding: 4px 24px;
+}
+#file-name {
+    font-size: 14px;
+    white-space: nowrap;
+    padding: 4px 0px;
 }
 #toolbar {
     display: flex;

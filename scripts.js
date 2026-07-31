@@ -42,71 +42,14 @@ const app = {
         history: {
             undoStack: [],
             redoStack: []
-        }
+        },
+        document: {
+            name: "Untitled.json",
+            hasUnsavedChanges: false
+        },
     },
-    
     data: {
-        map: {
-            grid: {
-                type: "hex-vertical",
-                width: 10,
-                height: 10,
-                backgroundImage: null,
-                backgroundWidth: 100,
-                backgroundHeight: 100,
-                showTerrainIcons: true,
-                showTerrainColors: true
-            },
-            geography: {
-                plains: {
-                    name: "Plains",
-                    backgroundColor: "#5c6b3c",
-                    icon: "🌾",
-                    iconColor: "#ffffff",
-                    rollTable: null
-                },
-                forest: {
-                    name: "Forest",
-                    backgroundColor: "#285943",
-                    icon: "🌲",
-                    iconColor: "#ffffff",
-                    rollTable: null
-                },
-                mountain: {
-                    name: "Mountain",
-                    backgroundColor: "#555555",
-                    icon: "▲",
-                    iconColor: "#ffffff",
-                    rollTable: null
-                }
-            },
-            factions: {
-                ironwood: {
-                    name: "Ironwood Clan",
-                    color: "#3b82f6",
-                    icon: "◆"
-                },
-                redBanner: {
-                    name: "Red Banner",
-                    color: "#c0392b",
-                    icon: "●"
-                }
-            },
-            hexes: {
-                "2,2": {
-                    terrain: "forest",
-                    faction: "ironwood"
-                },
-                "4,3": {
-                    terrain: "mountain",
-                    faction: "redBanner"
-                },
-                "6,6": {
-                    terrain: "plains",
-                    faction: null
-                }
-            }
-        }
+        map: createDefaultMap()
     }
 };
 
@@ -141,16 +84,36 @@ function commitAction(type, description, data = null) {
     };
     app.state.history.undoStack.push(action);
     app.state.history.redoStack = [];
+    app.state.document.hasUnsavedChanges = true;
     showMessage(description, "success");
 }
 
 /* ==================================================================================================================
    INITIALIZATION
    ================================================================================================================== */
+function createDefaultMap() {
+    return {
+        grid: {
+            type: "hex-vertical",
+            width: 10,
+            height: 10,
+            backgroundImage: null,
+            backgroundWidth: 100,
+            backgroundHeight: 100,
+            showTerrainIcons: true,
+            showTerrainColors: true
+        },
+        hexes: {},
+        geography: {},
+        factions: {}
+    };
+}
+
 function initialize() {
     console.log("Initializing Debreut's Hexcrawl Manager...");
     setupPropertiesEvents();
     setupMenus();
+    setupFileInput();
     render();
     showMessage("App Initialized");
 }
@@ -533,16 +496,12 @@ function commitPendingTerrainEdit() {
     }
     const newValue = structuredClone(terrain[edit.property]);
     if (JSON.stringify(edit.oldValue) !== JSON.stringify(newValue)) {
-        commitAction(
-            "EDIT_TERRAIN",
-            `Changed ${edit.property} of ${terrain.name}.`,
-            {
-                terrainId: edit.terrainId,
-                property: edit.property,
-                oldValue: edit.oldValue,
-                newValue: newValue
-            }
-        );
+        commitAction("EDIT_TERRAIN", `Changed ${edit.property} of ${terrain.name}.`, {
+            terrainId: edit.terrainId,
+            property: edit.property,
+            oldValue: edit.oldValue,
+            newValue: newValue
+        });
     }
     app.state.pendingEdit = null;
 }
@@ -779,11 +738,25 @@ function renderGeographyProperties() {
         <button id="add-terrain-button" type="button">+ Add New Terrain</button>
         <button id="exit-geography-button" type="button">Exit Geography Tool</button>
     `;
+    bindGeographyProperties();
+}
+
+function bindGeographyProperties() {
+    bindTerrainButtons();
+    bindTerrainEditor();
+    bindRollTable();
+    bindToolButtons();
+}
+
+function bindTerrainButtons() {
     document.querySelectorAll(".geography-terrain").forEach(button => {
         button.addEventListener("click", () => {
             selectTerrain(button.dataset.terrainId);
         });
     });
+}
+
+function bindTerrainEditor() {
     const terrainNameInput = document.getElementById("terrain-name");
     const terrainIconInput = document.getElementById("terrain-icon");
     const terrainBackgroundColorInput = document.getElementById("terrain-background-color");
@@ -835,6 +808,9 @@ function renderGeographyProperties() {
             updateTerrainProperty("iconColor", event.target.value);
         });
     }
+}
+
+function bindRollTable() {
     document.querySelectorAll(".roll-table-header").forEach(input => {
         input.addEventListener("input", event => {
             const column = Number(event.target.dataset.column);
@@ -872,6 +848,9 @@ function renderGeographyProperties() {
     if (removeRollTableButton) {
         removeRollTableButton.addEventListener("click", removeTerrainRollTable);
     }
+}
+
+function bindToolButtons() {
     document.getElementById("add-terrain-button").addEventListener("click", addTerrain);
     const deleteTerrainButton = document.getElementById("delete-terrain-button");
     if (deleteTerrainButton) {
@@ -879,7 +858,7 @@ function renderGeographyProperties() {
             deleteTerrain(app.state.selectedTerrain);
         });
     }
-    document.getElementById("exit-geography-button").addEventListener("click", exitGeographyTool);0
+    document.getElementById("exit-geography-button").addEventListener("click", exitGeographyTool);
 }
 
 function addTerrainRollTable() {
@@ -1104,6 +1083,34 @@ function removeHexProperty(property, index) {
 /* ==================================================================================================================
    SET UP MENU
    ================================================================================================================== */
+function executeMenuAction(action) {
+    switch (action) {
+        case "FILE_NEW":
+            newMap();
+            break;
+
+        case "FILE_OPEN":
+            openDocument();
+            break;
+
+        case "FILE_SAVE":
+            saveDocument();
+            break;
+
+        case "FILE_SAVE_AS":
+            saveDocumentAs();
+            break;
+
+        case "EDIT_UNDO":
+            undo();
+            break;
+
+        case "TOOLS_GEOGRAPHY":
+            enterGeographyTool();
+            break;
+    }
+}
+
 function setupMenus() {
     const menuItems = document.querySelectorAll(".menu-item");
     menuItems.forEach(menuItem => {
@@ -1125,6 +1132,151 @@ function setupMenus() {
     document.addEventListener("click", () => {
         menuItems.forEach(item => item.classList.remove("open"));
     });
+    document.getElementById("file-new-button").addEventListener("click", () => {
+        executeMenuAction("FILE_NEW");
+    });
+    document.getElementById("file-save-button").addEventListener("click", () => {
+        executeMenuAction("FILE_SAVE");
+    });
+    document.getElementById("file-open-button").addEventListener("click", () => {
+        executeMenuAction("FILE_OPEN");
+    });
+    document.getElementById("file-save-as-button").addEventListener("click", () => {
+        executeMenuAction("FILE_SAVE_AS");
+    });
+}
+
+/* ==================================================================================================================
+   FILE OPERATIONS
+   ================================================================================================================== */
+function newMap() {
+    const confirmed = confirm(
+        "Create a new map?\n\nAny unsaved changes will be lost."
+    );
+    if (!confirmed) {
+        return;
+    }
+    app.data.map = createDefaultMap();
+    app.state.selectedHex = null;
+    app.state.selectedTerrain = null;
+    app.state.currentState = APP_STATES.NONE;
+    app.state.history.undoStack = [];
+    app.state.history.redoStack = [];
+    app.state.document.name = "Untitled.json";
+    app.state.document.hasUnsavedChanges = false;
+    render();
+    commitAction("NEW_MAP", "Created new map.");
+}
+
+function openDocument() {
+    if (app.state.document.hasUnsavedChanges) {
+        const confirmed = confirm(
+            "Open another map?\n\nUnsaved changes will be lost."
+        );
+        if (!confirmed) {
+            return;
+        }
+    }
+    document.getElementById("file-input").click();
+}
+
+function saveDocument() {
+    downloadDocument(app.state.document.name);
+    app.state.document.hasUnsavedChanges = false;
+    render();
+    showMessage("Document saved.");
+}
+
+function saveDocumentAs() {
+    let filename = prompt(
+        "Enter a file name:",
+        app.state.document.name
+    );
+    if (filename === null) {
+        return;
+    }
+    filename = filename.trim();
+    if (filename === "") {
+        showMessage("Invalid file name.", "error");
+        return;
+    }
+    if (!filename.toLowerCase().endsWith(".json")) {
+        filename += ".json";
+    }
+    downloadDocument(filename);
+    app.state.document.name = filename;
+    app.state.document.hasUnsavedChanges = false;
+    render();
+    showMessage("Document saved as " + filename + ".");
+}
+
+function downloadDocument(filename) {
+    const json = serializeDocument();
+    const blob = new Blob([json], {
+        type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function setupFileInput() {
+    const input = document.getElementById("file-input");
+    input.addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+        loadDocument(file);
+        input.value = "";
+    });
+}
+
+function loadDocument(file) {
+    const reader = new FileReader();
+    reader.onload = event => {
+        try {
+            const documentData = JSON.parse(event.target.result);
+            importDocument(documentData);
+            app.state.document.name = file.name;
+            app.state.document.hasUnsavedChanges = false;
+            render();
+            showMessage("Document opened.");
+        }
+        catch {
+            showMessage("Invalid document.", "error");
+        }
+    };
+    reader.readAsText(file);
+}
+
+function importDocument(documentData) {
+    app.data = documentData;
+}
+
+function serializeDocument() {
+    return JSON.stringify(app.data, null, 4);
+}
+
+function updateWindowTitle() {
+    let title = "";
+    if (app.state.document.hasUnsavedChanges) {
+        title += "*";
+    }
+    title += `Debreut's Hexcrawl Manager - ${app.state.document.name}`;
+    document.title = title;
+}
+
+function updateFileName() {
+    let fileName = `${app.state.document.name}`;
+    fileName += app.state.document.hasUnsavedChanges ? "*" : " (saved)";
+    let element = document.getElementById("file-name")
+    element.innerHTML = `<i>${fileName}</i>`;
 }
 
 /* ==================================================================================================================
@@ -1133,6 +1285,8 @@ function setupMenus() {
 function render() {
     renderMap();
     renderProperties();
+    updateWindowTitle();
+    updateFileName();
 }
 
 /* ==================================================================================================================
