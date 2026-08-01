@@ -18,48 +18,32 @@
                 <div class="menu-item" id="file-menu">
                     <button class="menu-button" type="button">File</button>
                     <div class="dropdown-menu" id="file-dropdown">
-                        <button id="button-file-new" type="button" disabled>New</button>
-                        <button id="button-file-open" type="button" disabled>Open</button>
-                        <button id="button-file-save" type="button" disabled>Save</button>
-                        <button id="button-file-save-as" type="button" disabled>Save As</button>
+                        <button id="file-new-button" type="button">New</button>
+                        <button id="file-open-button" type="button">Open</button>
+                        <button id="file-save-button" type="button">Save</button>
+                        <button id="file-save-as-button" type="button">Save As</button>
                     </div>
                 </div>
-                <div class="divider">|</div>
                 <div class="menu-item" id="edit-menu">
                     <button class="menu-button" type="button">Edit</button>
                     <div class="dropdown-menu" id="edit-dropdown">
-                        <button id="button-edit-undo" type="button" disabled>Undo</button>
-                        <button id="button-edit-redo" type="button" disabled>Redo</button>
-                        <button id="button-edit-cut" type="button" disabled>Cut</button>
-                        <button id="button-edit-copy" type="button" disabled>Copy</button>
-                        <button id="button-edit-paste" type="button" disabled>Paste</button>
+                        <button type="button" disabled>Undo</button>
+                        <button type="button" disabled>Redo</button>
                     </div>
                 </div>
-                <div class="divider">|</div>
                 <div class="menu-item" id="view-menu">
                     <button class="menu-button" type="button">View</button>
                     <div class="dropdown-menu" id="view-dropdown">
-                        <button id="button-view-zoom-in" type="button" disabled>Zoom In</button>
-                        <button id="button-view-zoom-out" type="button" disabled>Zoom Out</button>
-                        <button id="button-view-zoom-reset" type="button" disabled>Zoom Reset</button>
+                        <button type="button" disabled>Zoom In</button>
+                        <button type="button" disabled>Zoom Out</button>
+                        <button type="button" disabled>Reset View</button>
                     </div>
                 </div>
-                <div class="divider">|</div>
                 <div class="menu-item" id="tools-menu">
                     <button class="menu-button" type="button">Tools</button>
                     <div class="dropdown-menu" id="tools-dropdown">
-                        <button id="button-tools-geography" type="button" disabled>Geography</button>
-                        <button id="button-tools-factions" type="button" disabled>Factions</button>
-                        <button id="button-tools-hex-configuration" type="button" disabled>Hex Config</button>
-                    </div>
-                </div>
-                <div class="divider">|</div>
-                <div class="menu-item" id="help-menu">
-                    <button class="menu-button" type="button">Help</button>
-                    <div class="dropdown-menu" id="help-dropdown">
-                        <button id="button-help-manual" type="button" disabled>Manual</button>
-                        <button id="button-help-about" type="button" disabled>About</button>
-                        <button id="button-help-version" type="button" disabled>Version</button>
+                        <button id="geography-tool-button" type="button">Geography</button>
+                        <button type="button" disabled>Factions</button>
                     </div>
                 </div>
             </div>
@@ -83,17 +67,14 @@
 
         <aside id="properties-window">
             <!-- ===== State: NONE ===== -->
-            <div id="properties-none" class="tool-area" data-state="NONE">
+            <div id="properties-none" class="property-state" data-state="NONE">
                 <h2>No properties selected</h2>
                 <p><i>Select a hex or tool to display its properties here.</i></p>
             </div>
 
             <!-- ===== State: HEX INFO ===== -->
-            <div id="properties-hex-edit" class="tool-area" data-state="EDIT_HEX">
+            <div id="properties-hex-info" class="property-state" data-state="HEX_INFO">
                 <h2>Hex Info</h2>
-                <div class="content">
-                    <p><i>Hex information will be displayed here.</i></p>
-                </div>
                 <!-- TODO features:
                 - Hex coordinates
                 - Hex terrain
@@ -107,30 +88,22 @@
                     - city
                     - landmark
                 -->
-                <button class="exit-tool-button" type="button">Close Hex Window</button>
             </div>
 
-            <!-- ===== State: HEX CONFIGURATION ===== -->
-            <div id="properties-hex-configuration" class="tool-area" data-state="HEX_CONFIGURATION">
-                <h2>Hex Configuration</h2>
-                <div class="content">
-                    <p><i>Hex configuration options will be displayed here.</i></p>
-                </div>
+            <!-- ===== State: HEX GRID ===== -->
+            <div id="properties-hex-grid" class="property-state" data-state="HEX_GRID">
+                <h2>Hex Grid</h2>
                 <!-- TODO features:
                 - grid type (vert point hex, horizontal point hex, square)
                 - grid size (width, height)
                 - background image (url)
                 - show icons, background colors
                 -->
-                <button class="exit-tool-button" type="button">Close Hex Configuration Window</button>
             </div>
 
             <!-- ===== State: FACTIONS ===== -->
-            <div id="properties-factions" class="tool-area" data-state="FACTIONS">
+            <div id="properties-factions" class="property-state" data-state="FACTIONS">
                 <h2>Factions</h2>
-                <div class="content">
-                    <p><i>Faction management options will be displayed here.</i></p>
-                </div>
                 <!-- TODO features:
                 - add faction
                     - name
@@ -139,16 +112,13 @@
                     - roll table
                 - remove faction
                 -->
-                <button class="exit-tool-button" type="button">Close Factions Tool</button>
             </div>
 
             <!-- ===== State: GEOGRAPHY ===== -->
-            <div id="properties-geography" class="tool-area" data-state="GEOGRAPHY">
+            <div id="properties-geography" class="property-state" data-state="GEOGRAPHY">
                 <h2>Geography</h2>
-                <div class="content">
-                    <p><i>Geography tool options will be displayed here.</i></p>
-                </div>
-                <button class="exit-tool-button" type="button">Close Geography Tool</button>
+                <p>Geography tool active.</p>
+                <button id="exit-geography-button" type="button">Exit Geography Tool</button>
             </div>
         </aside>
     </main>
@@ -156,6 +126,8 @@
     <footer>
         &copy; 2026 Jeremy Barnes. All rights reserved.
     </footer>
+
+    <input id="file-input" type="file" accept=".json" hidden>
     <script src="scripts.js"></script>
 </body>
 </html>
