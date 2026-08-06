@@ -10,14 +10,14 @@
     --tool-border-color: #445061;
     
     --button-hover-bg-color: #374151;
+    --button-active-bg-color: #242d38;
 
     --selected-text-color: #22c55e;
     --selected-bg-color: #22c55e;
     --selected-border-color: #16a34a;
 
     --delete-color: #ef4444;
-    --delete-bg-color: #b91c1c;
-    --delete-border-color: #991b1b;
+    --add-color: #66ef44;
 
     --form-bg-color: #0f172a;
     --form-border-color: #475569;
@@ -38,7 +38,7 @@
     --hex-coordinate-color: #151515;
 }
 
-/* ===== Global Base ===== */
+/* ==================== Global ==================== */
 body, html {
     margin: 0;
     height: 100%;
@@ -51,8 +51,64 @@ body {
     background-color: var(--page-bg-color);
     color: var(--text-color);
 }
+h2 {
+    text-align: center;
+}
+hr {
+    border: none;
+    border-top: 1px solid var(--tool-border-color);
+    margin: 8px 0;
+}
+button {
+    font-family: inherit;
+}
 
-/* ===== Header ===== */
+/*  Forms Elements */
+textarea, input, button, select {
+    font-family: inherit;
+    background-color: var(--form-bg-color);
+    border: 1px solid var(--form-border-color);
+    color: var(--form-text-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+textarea:focus, input:focus, select:focus {
+    outline: none;
+    border: 1px solid var(--selected-border-color);
+}
+input {
+    width: 80%;
+}
+textarea {
+    min-height: 2rem;
+    resize: none;
+    field-sizing: content;
+    text-wrap: auto;
+}
+button {
+    color: var(--form-text-color);
+    cursor: pointer;
+}
+button:hover:not(:disabled) {
+    background-color: var(--button-hover-bg-color);
+}
+button:active:not(:disabled) {
+    background-color: var(--button-active-bg-color);
+}
+.good-button {
+    color: var(--add-color);
+    border: 1px solid var(--add-color);
+}
+.bad-button {
+    color: var(--delete-color);
+    border: 1px solid var(--delete-color);
+}
+table {
+    width: 100%;
+    border: 1px solid #000;
+}
+
+/* ==================== Header ==================== */
 header {
     display: flex;
     flex-direction: column;
@@ -64,6 +120,7 @@ header {
 
 #logobar {
     display: flex;
+    align-items: center;
     flex-direction: row;
 }
 #logo {
@@ -98,7 +155,7 @@ header {
     color: var(--faded-text-color);
 }
 
-/* ===== Main Layout ===== */
+/* ==================== Main Layout ==================== */
 main {
     display: flex;
     flex: 1;
@@ -124,9 +181,9 @@ main {
     background-color: var(--page-bg-color);
 }
 
-/* ===== Footer ===== */
+/* ==================== Footer ==================== */
 footer {
-    padding: 8px 16px;
+    padding: 6px 16px;
     background-color: var(--section-bg-color);
     border-top: 1px solid var(--section-border-color);
     text-align: center;
@@ -134,7 +191,13 @@ footer {
     font-size: 12px;
 }
 
-/* ===== Tool Elements ===== */
+/* ==================== Tool Elements ==================== */
+.tool-header {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
 .tool-area {
     display: flex;
     flex-direction: column;
@@ -143,6 +206,9 @@ footer {
     background-color: var(--section-bg-color);
     border: 1px solid var(--tool-border-color);
     border-radius: 8px;
+}
+.tool-area.hide {
+    display: none;
 }
 .exit-tool-button {
     margin-top: 16px;
@@ -162,35 +228,80 @@ footer {
     color: var(--selected-text-color);
 }
 
-
-/* ===== Forms Elements ===== */
-
-
-
-
-
-/* ===== Shared UI ===== */
-button {
-    font-family: inherit;
+/* Geography Tool */
+.terrain {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0;
+    border: 1px solid linear-gradient(to bottom, transparent, var(--form-border-color));
+    border-radius: 4px;
 }
+.innerdiv {
+    width: 95%;
+    margin: 4px auto;
+    padding: 4px;
+    border: 1px solid var(--form-border-color);
+    border-width: 0 1px;
+    
+}
+.terrain button {
+    width: 100%;
+}
+#add-new-terrain-button {
+    width: 100%;
+}
+.terrain-editor {
+    display: block;
+}
+
+
+/* Hex Editor */
+#hex-terrain-type {
+    padding: 0 0 24px;
+}
+#properties-hex-edit {
+    background: linear-gradient(to bottom, #000, var(--section-bg-color), var(--section-bg-color)); /*change #000 to terrain color*/
+    border-radius: 8px;
+}
+#header-hex-title {
+    background-color: var(--section-bg-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--tool-border-color);
+}
+#hex-faction-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+#hex-faction-presence {
+    width: 3em;
+}
+
+
+/* ==================== Menu Bar ==================== */
 .menu {
     display: flex;
-    gap: 4px;
     align-items: center;
+    user-select: none;
 }
 .menu-item {
     position: relative;
 }
 .menu-button {
-    padding: 4px 8px;
-    background: transparent;
+    padding: 0 4px;
+    background: none;
     border: none;
     color: var(--text-color);
     cursor: pointer;
     font: inherit;
 }
-.menu-button:hover, .menu-item.open .menu-button {
-    background-color: var(--menu-hover-bg-color);
+.menu-button:hover {
+    background-color: var(--button-hover-bg-color);
+}
+.menu-button.active-button {
+    background-color: var(--button-hover-bg-color);
 }
 .dropdown-menu {
     display: none;
@@ -200,34 +311,34 @@ button {
     min-width: 150px;
     padding: 4px;
     background-color: var(--section-bg-color);
+    color: var(--text-color);
     border: 1px solid var(--form-border-color);
     border-radius: 4px;
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
-.menu-item.open .dropdown-menu {
-    display: block;
+.dropdown-menu.show {
+    display: flex;
+    flex-direction: column;
 }
 .dropdown-menu button {
-    display: block;
-    width: 100%;
-    padding: 7px 10px;
-    background: transparent;
+    background: none;
     border: none;
-    color: var(--text-color);
     text-align: left;
+    width: 100%;
     cursor: pointer;
-    font: inherit;
+    color: inherit;
 }
-.dropdown-menu button:hover:not(:disabled) {
-    background-color: var(--menu-hover-bg-color);
+.dropdown-menu button:hover {
+    background-color: var(--button-hover-bg-color);
 }
 .dropdown-menu button:disabled {
-    color:
-    var(--faded-text-color);
-    opacity: 0.5;
-    cursor: default;
+    color: var(--faded-text-color);
+    background: none;
 }
+
+
+/* ==================== Messages ==================== */
 #messages {
     display: flex;
     flex-direction: row;
@@ -241,7 +352,7 @@ button {
     padding: 0.4rem 0.75rem;
     border: 1px solid;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 14px;
     opacity: 1;
     transition: opacity 0.5s ease;
     white-space: nowrap;
@@ -259,11 +370,11 @@ button {
 .message.fade-out {
     opacity: 0;
 }
+
+
+/* ==================== Roll Tables ==================== */
 .terrain-roll-table {
-    margin-top: 1rem;
-}
-.terrain-roll-table h4 {
-    margin-bottom: 0.5rem;
+    margin: 0.5rem 0 0.5rem;
 }
 #terrain-roll-table {
     width: 100%;
