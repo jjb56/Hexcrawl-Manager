@@ -25,146 +25,475 @@ function saveEditChanges(element_id) {
     //saves the changes taken in a form element
 }
 
-// ========== Roll tables ==========
-function createRollTable(terrain_id) {
-    //Creates a new blank roll table and appends it to the provided array.
+/*
+data: {
+    roll_tables: {
+        0: {
+            name: "",
+            rows: [
+                ["", ""],
+                ["", ""]
+            ]
+        }
+    },
+    geography/factions/etc: {
+        0: {
+            name: ""
+            roll_table_ids: [0]
+        };
+    }
+}
+*/
+
+//TODO: fix rendering and css of tables
+
+//========================================================================================================================================
+//              Roll Table Functions
+//========================================================================================================================================
+/**
+ * Creates a new roll table and assigns ownership to an object.
+ * The table itself is stored globally in `app.data.roll_tables`, while the owning object stores only its table ID.
+ * @param {string} current_tool The collection that owns the table (e.g. `"geography"` or `"factions"`).
+ * @param {number} owner_id The ID of the owning object within the selected collection. 
+ * @returns {void}
+ */
+function createRollTable(current_tool, owner_id) {
     //set data
-    const roll_table = {
-        name: "New Roll Table",
+    const table_id = app.data.next_id++;
+    const table = {
+        name: `Roll Table ${table_id}`,
         rows: [
             ["Roll", "Result"],
             ["", ""]
         ]
-    };
+    }
 
     //create actions
-    const do_action = () => app.data.geography[terrain_id].roll_tables.push(structuredClone(roll_table));
-    const undo_action = () => app.data.geography[terrain_id].roll_tables.pop();
+    const render = () => refreshRollTableOwner(current_tool, owner_id);
+    const do_action = () => {
+        app.data.roll_tables[table_id] = structuredClone(table);
+        app.data[current_tool][owner_id].roll_table_ids.push(table_id);
+        render();
+    };
+    const undo_action = () => {
+        delete app.data.roll_tables[table_id];
+        app.data[current_tool][owner_id].roll_table_ids.pop();
+        render();
+    };
 
     //execute actions
     do_action();
-    commitToHistory(`Added roll table to ${app.data.geography[terrain_id].name}`, undo_action, do_action);
-    renderTerrainList();
+    commitToHistory(`Added roll table to ${app.data[current_tool][owner_id].name}`, undo_action, do_action);
 }
 
-function addRollTableRow(table) {
-    //Parameters: table - A single roll table object.
-    //Functionality: Adds a new blank row to the bottom of the table.
-    //Example: addRollTableRow(app.data.terrain.roll_table_object[0]);
-
-    table.rows.push(new Array(table.rows[0].length).fill(""));
+/**
+ * Refreshes the roll table container for the owner object that contains the table.
+ * If the owner is a geography terrain currently expanded in the editor, only that terrain editor is rerendered.
+ * Otherwise the current tool is rerendered.
+ * @param {string} current_tool The collection that owns the roll table.
+ * @param {number} owner_id The ID of the owning object.
+ */
+function refreshRollTableOwner(current_tool, owner_id) {
+    if (current_tool === "geography") {
+        renderTerrainList();
+        return;
+    }
+    renderCurrentTool();
 }
 
-function deleteRollTable(roll_table_object, table_index) {
-    // Deletes the provided roll table from its roll_table_object object
-    //set data
-    const deleted_table = structuredClone(roll_table_object[table_index]);
+/**
+ * Deletes a roll table from the global roll table collection.
+ * @param {number} roll_table_id The unique ID of the roll table to delete.
+ * @returns {void}
+ */
+function deleteRollTable(roll_table_id, current_tool = null, owner_id = null) {
+    const deleted_table = structuredClone(app.data.roll_tables[roll_table_id]);
+    const owners = findRollTableOwners(roll_table_id);
 
-    //create actions
-    const do_action = () => roll_table_object.splice(table_index, 1);
-    const undo_action = () => roll_table_object.splice(table_index, 0, deleted_table);
+    const render = () => {
+        if (current_tool && owner_id !== null) {
+            refreshRollTableOwner(current_tool, owner_id);
+        } else if (owners.length === 1) {
+            refreshRollTableOwner(owners[0].tool, owners[0].owner_id);
+        } else {
+            renderCurrentTool();
+        }
+    };
 
-    //execute actions
+    const do_action = () => {
+        delete app.data.roll_tables[roll_table_id];
+        owners.forEach(owner => removeRollTableFromOwner(roll_table_id, owner.tool, owner.owner_id));
+        render();
+    };
+    const undo_action = () => {
+        app.data.roll_tables[roll_table_id] = structuredClone(deleted_table);
+        owners.forEach(owner => addRollTableToOwner(roll_table_id, owner.tool, owner.owner_id));
+        render();
+    };
+
     do_action();
     commitToHistory(`Deleted roll table ${deleted_table.name}`, undo_action, do_action);
 }
 
-function deleteRollTableRow(roll_table_object, table_index, row_index) {
-    // Deletes a row. If only the header remains afterwards, deletes the entire roll table.
-    //set data
-    const table = roll_table_object[table_index];
-    const deletedRow = structuredClone(table.rows[row_index]);
+/**
+ * Finds all owning objects that reference a given roll table ID.
+ * @param {number} roll_table_id The roll table ID to locate.
+ * @returns {Array<{tool:string,owner_id:string}>} A list of owners containing the tool name and owner ID.
+ */
+function findRollTableOwners(roll_table_id) {
+    const owners = [];
 
-    // If deleting this row would leave only the header, delete the whole table instead.
-    if (table.rows.length === 2) {
-        deleteRollTable(roll_table_object, table_index);
-        return;
+    for (const tool in app.data) {
+        if (tool === "roll_tables" || tool === "next_id") continue;
+        const collection = app.data[tool];
+        if (!collection || typeof collection !== "object") continue;
+
+        for (const owner_id in collection) {
+            const owner = collection[owner_id];
+            if (owner && Array.isArray(owner.roll_table_ids) && owner.roll_table_ids.includes(roll_table_id)) {
+                owners.push({ tool, owner_id });
+            }
+        }
     }
+
+    return owners;
+}
+
+/**
+ * Removes a roll table ID from an owner's roll_table_ids array.
+ * @param {number} roll_table_id The roll table ID to remove.
+ * @param {string} tool The collection containing the owner object.
+ * @param {string} owner_id The ID of the owner object.
+ * @returns {void}
+ */
+function removeRollTableFromOwner(roll_table_id, tool, owner_id) {
+    const owner = app.data[tool]?.[owner_id];
+    if (!owner || !Array.isArray(owner.roll_table_ids)) return;
+    const index = owner.roll_table_ids.indexOf(roll_table_id);
+    if (index !== -1) owner.roll_table_ids.splice(index, 1);
+}
+
+/**
+ * Adds a roll table ID to an owner's roll_table_ids array if not already present.
+ * @param {number} roll_table_id The roll table ID to add.
+ * @param {string} tool The collection containing the owner object.
+ * @param {string} owner_id The ID of the owner object.
+ * @returns {void}
+ */
+function addRollTableToOwner(roll_table_id, tool, owner_id) {
+    const owner = app.data[tool]?.[owner_id];
+    if (!owner || !Array.isArray(owner.roll_table_ids)) return;
+    if (!owner.roll_table_ids.includes(roll_table_id)) {
+        owner.roll_table_ids.push(roll_table_id);
+    }
+}
+
+/**
+ * Adds a blank row to the end of a roll table.
+ * @param {number} table_id The unique ID of the roll table to modify.
+ * @returns {void}
+ */
+function addRollTableRow(table_id) {
+    //set data
+    const table = app.data.roll_tables[table_id];
+    if (!table || !Array.isArray(table.rows)) return;
+
+    const reference_row = table.rows[0] || [];
+    const new_row = new Array(reference_row.length || 2).fill("");
 
     //create actions
     const do_action = () => {
-        table.rows.splice(row_index, 1);
+        table.rows.push(structuredClone(new_row));
+        renderCurrentTool();
     };
     const undo_action = () => {
-        table.rows.splice(row_index, 0, deletedRow);
+        table.rows.pop();
+        renderCurrentTool();
     };
+
+    //execute actions
+    do_action();
+    commitToHistory(`Added row to table ${table.name}`, undo_action, do_action);
+}
+
+/**
+ * Deletes a row from a roll table.
+ * @param {number} roll_table_id The unique ID of the roll table.
+ * @param {number} row_index The zero-based index of the row to delete.
+ * @returns {void}
+ */
+function deleteRollTableRow(roll_table_id, row_index) {
+    //set data
+    const table = app.data.roll_tables[roll_table_id];
+    if (!table) return;
+    const deleted_row = structuredClone(table.rows[row_index]);
+
+    //create actions
+    const render = () => renderCurrentTool();
+    const do_action = () => {
+        table.rows.splice(row_index, 1);
+        render();
+    }
+    const undo_action = () => {
+        table.rows.splice(row_index, 0, structuredClone(deleted_row));
+        render();
+    }
 
     //execute actions
     do_action();
     commitToHistory(`Deleted row ${row_index} from ${table.name}`, undo_action, do_action);
 }
 
-function setRollTableCell(table, row, column, value) {
-    //Functionality: Updates the contents of one cell.
-    //todo: commit changes
-    table.rows[row][column] = value;
+//========================================================================================================================================
+//              Forms Data Functions
+//========================================================================================================================================
+
+/**
+ * Saves changes made through a form element.
+ *
+ * The form element must contain:
+ * - data-object: The app.data collection name.
+ * - data-key: The unique key of the object within that collection.
+ *
+ * For direct properties:
+ * - data-property: The property being modified.
+ *
+ * For nested properties:
+ * - data-path: Dot-separated path to the property.
+ *
+ * Supports inputs, textareas, and other value-based form elements.
+ *
+ * Examples:
+ * <input data-object="roll_tables" data-key="43" data-property="name" onblur="saveFormChanges(this)">
+ * <textarea data-object="map" data-key="0, 3" data-property="description" onblur="saveFormChanges(this)">
+ * <input data-object="roll_tables" data-key="43" data-path="rows.1.0" onblur="saveFormChanges(this)">
+ * @param {HTMLElement} element The form element being saved.
+ * @returns {void}
+ */
+function saveFormChanges(element) {
+    const object_type = element.dataset.object;
+    const object_key = element.dataset.key;
+    const object = app.data[object_type][object_key];
+    const property = element.dataset.property;
+    const path = element.dataset.path;
+
+    // Determine how to access the value
+    const getValue = () => {
+        if (path) return getNestedValue(object, path);
+        return object[property];
+    };
+    const setValue = (value) => {
+        if (path) {
+            setNestedValue(object, path, value);
+            return;
+        }
+        object[property] = value;
+    };
+
+    // Store old and new values
+    const old_value = getValue();
+    const new_value = element.value;
+
+    // Ignore unchanged values
+    if (old_value === new_value) return;
+
+    // Create actions
+    const do_action = () => setValue(new_value);
+    const undo_action = () => setValue(old_value);
+
+    // Execute action
+    do_action();
+    commitToHistory(`Changed ${path ?? property} of ${object.name ?? object_key}`, undo_action, do_action);
 }
 
-function setRollTableName(table, value) {
-    // Changes the table's display name.
-    // TODO: commit changes
-    table.name = value;
+/**
+ * Retrieves a nested value from an object using dot notation (ex. getNestedValue(table, "rows.2.1")).
+ * @param {object} object The object to search.
+ * @param {string} path Dot-separated property path.
+ * @returns {*}
+ */
+function getNestedValue(object, path) {
+    return path
+        .split(".")
+        .reduce((current, key) => current[key], object);
 }
 
+/**
+ * Sets a nested value in an object using dot notation (ex. setNestedValue(table, "rows.2.1", "Forest")).
+ * @param {object} object The object to modify.
+ * @param {string} path Dot-separated property path.
+ * @param {*} value The value to assign.
+ * @returns {void}
+ */
+function setNestedValue(object, path, value) {
+    const keys = path.split(".");
+    const final_key = keys.pop();
+    const target = keys.reduce((current, key) => current[key], object);
+    target[final_key] = value;
+}
 
 //========================================================================================================================================
 //              HTML render Functions
 //========================================================================================================================================
-function renderRollTables(div_id, roll_table_holder, read_only = false) {
-    // Renders every roll table into the supplied div.
+/**
+ * Renders multiple groups of roll tables.
+ * The first array of roll table IDs is rendered as editable. All subsequent arrays are rendered as read-only.
+ * @param {string} div_id The empty div where the table list will be rendered.
+ * @param {Array<Array<number>>} array_of_roll_table_id_arrays An array containing arrays of roll table IDs (ex. [[0,2], [3], [6,7,9]]).
+ * @returns {void}
+ */
+function renderRollTableList(div_id, array_of_roll_table_id_arrays) {
+    //prepare container
+    const container = document.getElementById(div_id);
+    if (!container) return;
+    container.innerHTML = ""
+
+    //fill container
+    for (let i = 0; i < array_of_roll_table_id_arrays.length; i++) {
+        const read_only = (i > 0);
+        const table_div = document.createElement("div");
+        table_div.className = "roll-table-group";
+        table_div.id = `roll-table-group-${i}`;
+
+        container.appendChild(table_div);
+        renderRollTables(table_div.id, array_of_roll_table_id_arrays[i], read_only);
+    }
+}
+
+/**
+ * Renders a group of roll tables.
+ * @param {string} div_id The empty div where the tables will be rendered.
+ * @param {Array} roll_table_id_array Array of roll table IDs (ex. [0, 3, 4]).
+ * @param {boolean} read_only Whether the tables are read-only.
+ * @returns {void}
+ */
+function renderRollTables(div_id, roll_table_id_array, read_only = false, owner_tool = null, owner_id = null) {
+    //prepare container
+    const container = document.getElementById(div_id);
+    if (!container) return;
+    container.innerHTML = "";
+
+    //fill container
+    if (roll_table_id_array.length === 0) {
+        container.innerHTML = `<p><i>No roll tables.</i></p>`;
+        return;
+    }
+
+    for (const table_id of roll_table_id_array) {
+        const table_div = document.createElement("div");
+        const mode_class = read_only ? "roll-table-read-only" : "roll-table-editable";
+        table_div.className = `roll-table-div ${mode_class}`;
+        table_div.id = `roll-table-div-${table_id}`;
+
+        container.appendChild(table_div);
+        renderRollTable(table_div.id, table_id, read_only, owner_tool, owner_id);
+    }
+}
+
+/**
+ * Renders a single roll table.
+ * @param {string} div_id The empty div where the table will be rendered.
+ * @param {number} roll_table_id The unique ID of the roll table.
+ * @param {boolean} read_only Wether the table is read-only.
+ * @param {string|null} owner_tool Optional owning collection name.
+ * @param {number|null} owner_id Optional owning object ID.
+ * @returns {void}
+ */
+function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = null, owner_id = null) {
+    //prepare container
     const container = document.getElementById(div_id);
     if (!container) return;
 
-    container.innerHTML = "";
-
-    const num_tables = roll_table_holder.length;
-    let html = "";
-    if (num_tables === 0) {
-        html += `<p><i>No roll tables.</i></p>`;
-    } else {
-        for (let table = 0; table < num_tables; table++) {
-            html += renderRollTableHTML(roll_table_holder, table, read_only);
-        }
+    const table = app.data.roll_tables[roll_table_id];
+    if (!table) {
+        container.innerHTML = `<p><i>Missing roll table ${roll_table_id}</i></p>`;
+        return;
     }
+
+    const read = read_only ? "readonly" : "";
+    const mode_class = read_only ? "roll-table-read-only" : "roll-table-editable";
+    const deleteAction = owner_tool && owner_id !== null
+        ? `deleteRollTable(${roll_table_id}, '${owner_tool}', ${owner_id})`
+        : `deleteRollTable(${roll_table_id})`;
+    //prepare html
+    let html = `
+        <table class="roll-table ${mode_class}">
+            <colgroup>
+                <col class="roll-table-col-1">
+                <col class="roll-table-col-2">
+                <col class="roll-table-col-3">
+            </colgroup>
+            <tr>
+                <th colspan="3" class="table-header">
+                    <input
+                        type="text"
+                        value="${table.name}"
+                        data-object="roll_tables"
+                        data-key="${roll_table_id}"
+                        data-property="name"
+                        onblur="saveFormChanges(this)"
+                        ${read}
+                    >`;
+    if (!read_only) html += `
+                    <button class="bad-button" onclick="${deleteAction}">
+                        Delete
+                    </button>`;
+    html += `
+                </th>
+            </tr>
+    `;
+    for (let row = 0; row < table.rows.length; row++) {
+        html += `
+            <tr>
+                <td>
+                    <input
+                        type="text"
+                        value="${table.rows[row][0]}"
+                        data-object="roll_tables"
+                        data-key="${roll_table_id}"
+                        data-path="rows.${row}.0"
+                        onblur="saveFormChanges(this)"
+                        ${read}
+                    >
+                </td>
+                <td>
+                    <input
+                        type="text"
+                        value="${table.rows[row][1]}"
+                        data-object="roll_tables"
+                        data-key="${roll_table_id}"
+                        data-path="rows.${row}.1"
+                        onblur="saveFormChanges(this)"
+                        ${read}
+                    >
+                </td>
+        `;
+        if (!read_only) {
+            html += `
+                <td>
+                    <button class="bad-button" onclick="deleteRollTableRow('${roll_table_id}', ${row})">-</button>
+                </td>
+            `
+        }
+        html += `
+            </tr>
+        `;
+    }
+
+    if (!read_only) {
+        html += `
+            <tr>
+                <td colspan="3">
+                    <button class="good-button add-row-button" onclick="addRollTableRow(${roll_table_id})">+</button>
+                </td>
+            </tr>
+        `;
+    }
+
+    html += `
+        </table>
+    `;
 
     container.innerHTML = html;
 }
 
-/*
-tables = [
-    {
-        name: "",
-        rows: [
-            ["", ""],
-            ["", ""]
-        ];
-    }
-];
-*/
-
-function renderRollTableHTML(roll_table_object, roll_table_index, read_only = false) {
-    // Renders a roll table as an HTML string. FIXME: it hurts
-    const table = roll_table_object[roll_table_index];
-    const num_rows = table.rows.length;
-    const read = (read_only ? "readonly" : "");
-
-    let html = `<table class="terrain-roll-table">`;
-    html += `<th colspan="${read_only ? 2 : 3}"><input type="text" value="${table.name}" oninput="setRollTableName(${table.name}, this.value)"></input></th>`
-    for (let row = 0; row < num_rows; row++) {
-        //FIXME: delete button does not work
-        html += `<tr> 
-            <td><input type="text" value="${table.rows[row][0]}" oninput="setRollTableCell(${table}, ${row}, 0, this.value)" ${read}></input></td>
-            <td><input type="text" value="${table.rows[row][1]}" oninput="setRollTableCell(${table}, ${row}, 1, this.value)" ${read}></input></td>
-            ${read_only ? "" : `<td><button class="bad-button" onclick="deleteRollTableRow(${roll_table_object}, ${roll_table_index}, ${row})"> - </button></td>`}
-        </tr>`;
-    }
-    html += `</table>`;
-
-    return html;
-}
-
-//========================================================================================================================================
-//              Helper Functions
-//========================================================================================================================================
-
-///show message in the message bar

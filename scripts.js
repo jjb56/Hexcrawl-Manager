@@ -655,7 +655,7 @@ function renderGeographyProperties() {
         terrainHTML += `
             <button class="geography-terrain${selectedClass}" data-terrain-id="${terrainId}" type="button">
                 <span class="terrain-preview" style="background-color: ${terrain.backgroundColor}; color: ${terrain.iconColor};">${terrain.icon}</span>
-                ${escapeHTML(terrain.name)}
+                <span class="terrain-label">${escapeHTML(terrain.name)}</span>
             </button>
         `;
         let rollTableHTML = "";

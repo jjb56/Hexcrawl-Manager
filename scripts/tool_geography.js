@@ -7,8 +7,12 @@ let expanded_terrain = null;
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================
+
+/**
+ * Adds a new terrain type to the geography tool
+ * @returns {void}
+ */
 function addTerrainType() {
-    // Adds a new terrain type to the geography tool
     //set data
     const terrain_id = app.data.next_id++;
     const terrain_data = {
@@ -16,7 +20,7 @@ function addTerrainType() {
         background_color: "#4481b9",
         icon: "?",
         icon_color: "#ffffff",
-        roll_tables: []
+        roll_table_ids: []
     }
 
     //create actions
@@ -28,8 +32,12 @@ function addTerrainType() {
     commitToHistory(`Added terrain ${terrain_data.name}`, undo_action, do_action);
 }
 
+/**
+ * Deletes a terrain type from the geography tool.
+ * @param {number} terrain_id The ID of the terrain to delete.
+ * @returns {void}
+ */
 function deleteTerrainType(terrain_id) {
-    // Deletes a terrain type from the geography tool.
     //set data
     const terrain_data = structuredClone(app.data.geography[terrain_id]);
 
@@ -42,8 +50,15 @@ function deleteTerrainType(terrain_id) {
     commitToHistory(`Deleted ${terrain_data.name}`, undo_action, do_action);
 }
 
+// ======================== May Be Optional Under New Framework ========================
+
+/**
+ * Updates the name of the selected terrain to the value given.
+ * @param {*} terrain_id The ID of the terrain to update.
+ * @param {*} value The new name of the terrain
+ * @returns {void}
+ */
 function updateTerrainName(terrain_id, value) {
-    // Updates the name of the selected terrain to the value given
     //set data
     const old_value = app.data.geography[terrain_id].name;
     if (old_value === value) return;
@@ -102,6 +117,7 @@ function updateTerrainIconColor(terrain_id, value) {
     commitToHistory(`Changed ${app.data.geography[terrain_id].name} icon color`, undo_action, do_action);
 }
 
+//may be optional
 function saveTerrainChanges(terrain_id, div_element) {
     //update the ids of the changed items
     clearTimeout(edit_timer);
@@ -127,7 +143,7 @@ function renderTerrainList() {
     let selected_terrain_index = null
     div.innerHTML = "";
 
-    if (app.data.geography.length === 0) {
+    if (Object.keys(app.data.geography).length === 0) {
         div.innerHTML = "<p><i>No terrains exist. Add a new one below.</i></p>"
         return;
     }
@@ -139,13 +155,41 @@ function renderTerrainList() {
         terrain_div.className = "terrain";
         terrain_div.id = `terrain-${terrain_id}`
         
+        //make button
         const button = document.createElement("button");
-        button.textContent = terrain.name;
+        button.className = "terrain-button";
+
+        const icon = document.createElement("span");
+        icon.className = "terrain-preview";
+        icon.textContent = terrain.icon;
+        icon.style.backgroundColor = terrain.background_color;
+        icon.style.color = terrain.icon_color;
+
+        const name = document.createElement("span");
+        name.className = "terrain-label";
+        name.textContent = terrain.name;
+
+        const tables = document.createElement("span");
+        tables.className = "terrain-table-icons";
+        let table_icons = "";
+        if (terrain.roll_table_ids.length > 5) {
+            table_icons += ` ▦ x${terrain.roll_table_ids.length}`;
+        } else {
+            for (const roll_table_id of terrain.roll_table_ids) {
+                table_icons += " ▦";
+            }
+        }
+        tables.textContent = table_icons;
+
+        button.appendChild(icon);
+        button.appendChild(name);
+        button.appendChild(tables);
         button.onclick = () => {
             expanded_terrain = (expanded_terrain === terrain_id) ? null : terrain_id;
             renderTerrainList();
         };
 
+        //put together
         div.appendChild(terrain_div);
         terrain_div.appendChild(button);
 
@@ -180,17 +224,24 @@ function renderTerrain(div_id, terrain_id) {
     `;
     const table_div = editor.querySelector(`#terrain-roll-tables-${terrain_id}`);
 
-    //roll table
+    //roll tables
     const add_roll_table_button = document.createElement("button");
     add_roll_table_button.textContent = "+ Add Roll Table";
     add_roll_table_button.className = "good-button";
-    add_roll_table_button.onclick = () => createRollTable(terrain_id);
+    add_roll_table_button.onclick = () => createRollTable("geography", terrain_id);
 
     //save
     const inputs = editor.querySelectorAll("input");
 
     inputs.forEach(input => {
         input.onblur = () => saveTerrainChanges(terrain_id, editor);
+    });
+
+    // re-render terrain info when any field inside the terrain editor loses focus
+    editor.addEventListener("focusout", event => {
+        if (event.target.matches("input, textarea, select")) {
+            setTimeout(() => renderTerrainList(), 0);
+        }
     });
 
     //delete button
@@ -209,7 +260,7 @@ function renderTerrain(div_id, terrain_id) {
     container.innerHTML = "";
     container.appendChild(editor);
 
-    renderRollTables(`terrain-roll-tables-${terrain_id}`, terrain.roll_tables, false);
+    renderRollTables(`terrain-roll-tables-${terrain_id}`, terrain.roll_table_ids, false, "geography", terrain_id);
     table_div.appendChild(add_roll_table_button);
 }
 

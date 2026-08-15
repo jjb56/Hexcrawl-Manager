@@ -36,7 +36,8 @@ let app = {
         map: {},
         geography: {},
         factions: {},
-        hex_configuration: {}
+        hex_configuration: {},
+        roll_tables: {}
     }
 };
 
@@ -44,6 +45,7 @@ let app = {
 //              Tool open/close
 //========================================================================================================================================
 function activateTool(tool) {
+  app.current_tool = tool;
   const hide_var = "hide";
   
     // Hide all tool areas
@@ -54,10 +56,12 @@ function activateTool(tool) {
   switch (tool) {
     case "GEOGRAPHY":
       document.getElementById("properties-geography")?.classList.remove(hide_var);
+      renderCurrentTool();
       return;
 
     case "FACTIONS":
       document.getElementById("properties-factions")?.classList.remove(hide_var);
+      renderCurrentTool();
       return;
 
     case "HEX_CONFIGURATION":
@@ -86,11 +90,22 @@ document.querySelectorAll(".exit-tool-button").forEach(button => {
 
 // timer
 function resetTimer(timer) {
-        clearTimeout(timer);
-        timer = setTimeout(() => saveTerrainChanges(), 7000);
-    }
+    clearTimeout(timer);
+    timer = setTimeout(() => saveTerrainChanges(), 7000);
+}
 
-//========================================================================================================================================
-//              Load Other JavaScript Files
-//========================================================================================================================================
+//re-render tool
+function renderCurrentTool() {
+	switch (app.current_tool) {
+		case "GEOGRAPHY":
+			renderTerrainList();
+			break;
 
+		case "FACTIONS":
+			renderFactionList();
+			break;
+
+		default:
+			//none
+	}
+}

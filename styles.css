@@ -103,10 +103,6 @@ button:active:not(:disabled) {
     color: var(--delete-color);
     border: 1px solid var(--delete-color);
 }
-table {
-    width: 100%;
-    border: 1px solid #000;
-}
 
 /* ==================== Header ==================== */
 header {
@@ -242,11 +238,36 @@ footer {
     padding: 4px;
     border: 1px solid var(--form-border-color);
     border-width: 0 1px;
-    
 }
 .terrain button {
     width: 100%;
 }
+.terrain-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem;
+}
+.terrain-preview {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+}
+.terrain-label {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+.terrain-table-icons {
+    margin-left: auto;
+    display: flex;
+    flex-shrink: 0;
+}
+
 #add-new-terrain-button {
     width: 100%;
 }
@@ -254,6 +275,49 @@ footer {
     display: block;
 }
 
+/* Factions Tool */
+.faction {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0;
+    border: 1px solid linear-gradient(to bottom, transparent, var(--form-border-color));
+    border-radius: 4px;
+}
+.faction button {
+    width: 100%;
+}
+.faction-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem;
+}
+.faction-preview {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+}
+.faction-label {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+.faction-table-icons {
+    margin-left: auto;
+    display: flex;
+    flex-shrink: 0;
+}
+
+#add-new-faction-button {
+    width: 100%;
+}
+.faction-editor {
+    display: block;
+}
 
 /* Hex Editor */
 #hex-terrain-type {
@@ -373,37 +437,126 @@ footer {
 
 
 /* ==================== Roll Tables ==================== */
-.terrain-roll-table {
-    margin: 0.5rem 0 0.5rem;
-}
-#terrain-roll-table {
+ /* area border */
+.roll-table-div {
     width: 100%;
-    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+/* table */
+.roll-table {
+    width: 100%;
+    margin: 0.5rem 0;
+    border-collapse: separate;
+    border-spacing: 0;
     table-layout: fixed;
-}
-#terrain-roll-table th, #terrain-roll-table td {
+    background-color: var(--form-bg-color);
     border: 1px solid var(--form-border-color);
-    padding: 0;
+    overflow: hidden;
 }
-#terrain-roll-table input {
+
+/* content column-specific */
+.roll-table-col-1 {
+    width: 25%;
+}
+.roll-table-col-2 {
+    width: 65%;
+}
+.roll-table-col-3 {
+    width: 10%;
+}
+
+/* cell-specific */
+.roll-table th, .roll-table td {
+    padding: 1px;
+    border-right: 1px solid var(--form-border-color);
+    border-bottom: 1px solid var(--form-border-color);
+}
+.roll-table th:last-child, .roll-table td:last-child {
+    border-right: none;
+}
+.roll-table tr:last-child th, .roll-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* row-specific */
+.roll-table th {
+    padding: 1px;
+}
+.roll-table th input {
+    width: calc(100% - 4rem);
+}
+.roll-table th .bad-button {
+    float: right;
     box-sizing: border-box;
-    width: 100%;
-    border: none;
-    border-radius: 0;
-    padding: 0.4rem;
+    width: 4rem;
 }
-#terrain-roll-table th:first-child, #terrain-roll-table td:first-child {
+.roll-table .add-row-button {
+    min-height: 1rem;
+    padding: 2px;
+}
+
+/* cell content */
+.roll-table input {
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    width: 100%;
+}
+.roll-table input:focus {
+    box-shadow: inset 0 0 0 1px var(--selected-border-color);
+}
+.roll-table button {
+    box-sizing: border-box;
+}
+.roll-table td .bad-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* read-only state */
+.roll-table-read-only {
+    background-color: var(--section-bg-color);
+}
+.roll-table-read-only input {
+    cursor: default;
+}
+.roll-table-read-only th input {
+    width: 100%;
+}
+.roll-table-read-only .roll-table-col-1 {
     width: 30%;
 }
-#add-roll-table-row {
-    margin-top: 0.5rem;
+.roll-table-read-only .roll-table-col-2 {
+    width: 70%;
 }
-#terrain-roll-table th:last-child, #terrain-roll-table td:last-child {
-    width: 40px;
-    text-align: center;
+.roll-table-read-only .roll-table-col-3 {
+    width: 0;
 }
-.delete-roll-row {
-    width: 100%;
-    height: 100%;
-    padding: 0.25rem;
+
+/* editable state */
+/* .roll-table-editable td input {
+    cursor: text;
 }
+.roll-table-editable td input:hover, .roll-table-editable th input:hover {
+    background-color: var(--button-hover-bg-color);
+}
+.roll-table-editable th input {
+    color: var(--form-text-color);
+} */
+
+/* read-only state */
+/* .roll-table-read-only {
+    background-color: var(--section-bg-color);
+}
+.roll-table-read-only input {
+    cursor: default;
+    color: var(--text-color);
+}
+.roll-table-read-only input:read-only {
+    background-color: transparent;
+}
+.roll-table-read-only input:focus {
+    box-shadow: none;
+} */
