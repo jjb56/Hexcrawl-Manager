@@ -18,6 +18,8 @@ const tools = Object.freeze({
 
 let app = {
     current_tool: tools.NONE,
+	selected_hex: null,
+	hovered_hex: null,
     menu: {
         is_active: false,
         selected: null
@@ -31,13 +33,107 @@ let app = {
         name: "Untitled.json",
         hasUnsavedChanges: false
     },
-    data: {
-        next_id: 0,
-        map: {},
-        geography: {},
-        factions: {},
-        hex_configuration: {},
-        roll_tables: {}
+    data: { //reset before use: next_id to 0, empty map, geography, roll_tables, and factions
+        next_id: 6,
+		party_hex: null,
+        map: {  
+			"3,5": {
+				geography_id: 0,
+				description: "First Test Cell",
+				factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
+					{ faction_id: 1, presence: 400 }
+				], 
+				landmarks: ["An obelisk or something"], //optional, not drawn on hex
+				roll_tables: [3], //optional, but always displays the geography and faction-related tables below the hex tables
+			},
+			"3,6": {
+				geography_id: 2,
+				description: "Second Test Cell",
+				factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
+					{ faction_id: 1, presence: 400 },
+					{ faction_id: 4, presence: 300 }
+				], 
+				landmarks: ["An obelisk or something"], //optional, not drawn on hex
+				roll_tables: [], //optional, but always displays the geography and faction-related tables below the hex tables
+			},
+			"4,6": {
+				geography_id: 0,
+				description: "Third Test Cell",
+				factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
+					{ faction_id: 4, presence: 300 }
+				], 
+				landmarks: ["An obelisk or something"], //optional, not drawn on hex
+				roll_tables: [], //optional, but always displays the geography and faction-related tables below the hex tables
+			}
+		},
+        geography: {
+			0: {
+				name: 'Forest',
+				background_color: '#047000',
+				icon: '/|\\',
+				icon_color: '#00be00',
+				roll_table_ids: []
+			},
+			2: {
+				name: 'Desert',
+				background_color: '#ebb400',
+				icon: '~',
+				icon_color: '#ffee8d',
+				roll_table_ids: [5]
+			}
+		},
+        factions: {
+			1: {
+				name: 'Empire',
+				color: "#f72e2e",
+				icon: "^",
+				roll_table_ids: []
+			},
+			4: {
+				name: 'Stormcloaks',
+				color: "#5165d3",
+				icon: "-.-",
+				roll_table_ids: []
+			}
+		},
+        roll_tables: {
+			3: {
+				name: "",
+				rows: [
+					["", ""],
+					["", ""]
+				]
+			},
+			5: {
+				name: "",
+				rows: [
+					["", ""],
+					["", ""]
+				]
+			}
+		},
+        hex_configuration: {
+			map_width: 10,
+			map_height: 10,
+
+			shape: "pointy-top",
+
+			cell_width: 87,
+			cell_height: 100,
+
+			bg_image: "",
+			bg_stretch_x: 1.0,
+			bg_stretch_y: 1.0,
+			bg_offset_x: 0,
+			bg_offset_y: 0,
+			bg_alpha: 1.0,
+
+			show_coordinates: true,
+			icon_alpha: 1.0,
+			faction_border_width: 15,
+			faction_border_alpha: 1.0,
+			border_width: 1
+        }
     }
 };
 
@@ -103,6 +199,10 @@ function renderCurrentTool() {
 
 		case "FACTIONS":
 			renderFactionList();
+			break;
+
+		case "EDIT_HEX":
+			console.log("hex tool")//renderHexTool();
 			break;
 
 		default:

@@ -535,28 +535,86 @@ footer {
     width: 0;
 }
 
-/* editable state */
-/* .roll-table-editable td input {
-    cursor: text;
+/* ==================== Hex Map ==================== */
+#hex-map-surface {
+    position: relative;
 }
-.roll-table-editable td input:hover, .roll-table-editable th input:hover {
-    background-color: var(--button-hover-bg-color);
+.hex {
+    position: absolute;
+    background: gray;
+    transform: scale(1.01);
 }
-.roll-table-editable th input {
-    color: var(--form-text-color);
-} */
-
-/* read-only state */
-/* .roll-table-read-only {
-    background-color: var(--section-bg-color);
+.hex-pointy-top {
+    clip-path: polygon(
+        50% -0.5%,
+        100.5% 25%,
+        100.5% 75%,
+        50% 100.5%,
+        -0.5% 75%,
+        -0.5% 25%
+    );
 }
-.roll-table-read-only input {
-    cursor: default;
-    color: var(--text-color);
+.hex-flat-top {
+    clip-path: polygon(
+        25% -0.5%,
+        75% -0.5%,
+        100.5% 50%,
+        75% 100.5%,
+        25% 100.5%,
+        -0.5% 50%
+    );
 }
-.roll-table-read-only input:read-only {
-    background-color: transparent;
+.hex-square {
+    clip-path: none;
 }
-.roll-table-read-only input:focus {
-    box-shadow: none;
-} */
+.hex-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+}
+.hex-coordinate {
+    position: absolute;
+    left: 50%;
+    bottom: 15%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 3;
+}
+.hex-outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 10;
+}
+.hex-outline-polygon {
+    fill: none;
+}
+.hex-faction-borders {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 9;
+}
+.hex-hovered {
+    filter: brightness(1.2);
+}
+.hex-selection-border {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 20;
+}
+.hex-selected {
+    z-index: 100;
+}

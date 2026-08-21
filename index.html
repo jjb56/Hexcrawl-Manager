@@ -71,6 +71,7 @@
 
     <main>
         <section id="map-area">
+            <div id="hex-map-surface"></div>
             <!--
                 The map renderer will eventually
                 populate this container.
@@ -183,6 +184,12 @@
                 </div>
                 <hr>
                 <div class="tool-content">
+                    <div class="config-map-size">
+                        <h3>Map Size</h3>
+                        <input type="number" id="map-width" placeholder="10"><label for="map-width">Cells Wide</label>
+                        <input type="number" id="map-height" placeholder="10"><label for="map-height">Cells High</label>
+                    </div>
+                    <hr>
                     <div id="config-hex-shape">
                         <h3>Grid Cell Shape</h3>
                         <input type="radio" id="hex-type-pointy-top" name="grid-cell-shape"><label for="hex-type-pointy-top">Pointy-Top Hex</label><br>
@@ -266,6 +273,7 @@
     <script src="scripts/app.js"></script>
     <script src="scripts/data.js"></script>
     <script src="scripts/menubar.js"></script>
+    <script src="scripts/hex_surface.js"></script>
     <script src="scripts/tool_geography.js"></script>
     <script src="scripts/tool_factions.js"></script>
 </body>
