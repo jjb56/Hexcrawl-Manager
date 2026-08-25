@@ -140,7 +140,7 @@ function renderTerrainList() {
     // Renders the full list of geography
     const div = document.getElementById("terrain-list");
     let selected_div_id = null;
-    let selected_terrain_index = null
+    let selected_terrain_index = null;
     div.innerHTML = "";
 
     if (Object.keys(app.data.geography).length === 0) {
@@ -266,7 +266,7 @@ function renderTerrain(div_id, terrain_id) {
 
 function renderGeographyTool() {
     // Renders the initialization of the geography tool when selected.
-    // is this function actually needed?
+    renderTerrainList();
 }
 
 //========================================================================================================================================

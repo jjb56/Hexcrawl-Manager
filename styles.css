@@ -543,6 +543,7 @@ footer {
     position: absolute;
     background: gray;
     transform: scale(1.01);
+    user-select: none;
 }
 .hex-pointy-top {
     clip-path: polygon(
@@ -617,4 +618,51 @@ footer {
 }
 .hex-selected {
     z-index: 100;
+}
+
+/* ==================== Factions ==================== */
+.hex-faction-flag {
+    height: 22px;
+    width: 33px;
+    border: 1px solid black;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* ==================== Terrain Paint ==================== */
+#terrain-paint-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+.terrain-paint-list-box {
+    min-width: 64px;
+    height: 72px;
+    padding: 4px;
+    box-sizing: border-box;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    transition:
+        filter 0.12s ease,
+        border-color 0.12s ease;
+    user-select: none;
+}
+.terrain-paint-list-box p {
+    margin: 0;
+    padding: 0;
+}
+.terrain-paint-list-box:hover {
+    filter: brightness(1.15);
 }

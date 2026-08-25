@@ -98,6 +98,10 @@
                     <textarea id="hex-description" placeholder="Enter a description for this region..."></textarea>
                 </div>
                 <hr>
+                <div id="hex-edit-content">
+                    
+                </div>
+                <!-- <hr>
                 <div class="tool-content">
                     <div class="hex-city">
                         <h3>City</h3>
@@ -138,14 +142,17 @@
                     </div>
                 </div>
                 <hr>
-                <div id="add-preperty-region">
+                <div id="add-property-region">
                     <select id="hex-select-property">
-                        <option>hi</option>
+                        <option>City</option>
+                        <option>Landmark</option>
+                        <option>Notes</option>
+                        <option>Faction</option>
                     </select>
                     <button id="hex-add-property" class="good-button">+ Add</button>
                 </div>
                 <hr>
-                <button class="exit-tool-button" type="button">Close Region Window</button>
+                <button class="exit-tool-button" type="button">Close Region Window</button> -->
             </div>
 
             <!-- ===== State: TERRAIN_PAINT ===== -->
@@ -156,22 +163,10 @@
                         <button id="terrain-paint-biome-tab" class="terain-paint-tab" data-state="PAINT_TERRAIN">Biome</button>
                         <button id="terrain-paint-line-tab" class="terrain-paint-tab" data-state="PAINT_LINE" disabled>Line</button>
                     </div>
-                    <hr>
+                </div>
+                <hr>
+                <div id="terrain-paint-list">
                     <p><i>No terrain exists to paint. Create a new terrain using the Geography tool.</i></p>
-                    <!-- <div class="tool-content">
-                        <div id="paint-options" data-state="PAINT_TERRAIN">
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                        </div>
-                        <div id="paint-options" data-state="PAINT_LINE">
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                            <div class="paint-option"></div>
-                        </div>
-                    </div> -->
                 </div>
                 <hr>
                 <button class="exit-tool-button" type="button">Close Paint Tool</button>
@@ -274,7 +269,9 @@
     <script src="scripts/data.js"></script>
     <script src="scripts/menubar.js"></script>
     <script src="scripts/hex_surface.js"></script>
+    <script src="scripts/tool_hex_edit.js"></script>
     <script src="scripts/tool_geography.js"></script>
     <script src="scripts/tool_factions.js"></script>
+    <script src="scripts/tool_terrain_paint.js"></script>
 </body>
 </html>

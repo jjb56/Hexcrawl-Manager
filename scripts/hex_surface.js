@@ -55,9 +55,7 @@ renderHexes();
 function renderHexHover(hex_key) {
     // Remove the previous hover state.
     if (app.hovered_hex !== null) {
-        const previous_hex = document.querySelector(
-            `[data-hex-key="${app.hovered_hex}"]`
-        );
+        const previous_hex = document.querySelector(`[data-hex-key="${app.hovered_hex}"]`);
 
         if (previous_hex) {
             previous_hex.classList.remove("hex-hovered");
@@ -68,13 +66,8 @@ function renderHexHover(hex_key) {
 
     // Add the new hover state.
     if (hex_key !== null) {
-        const hex = document.querySelector(
-            `[data-hex-key="${hex_key}"]`
-        );
-
-        if (hex) {
-            hex.classList.add("hex-hovered");
-        }
+        const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
+        if (hex) hex.classList.add("hex-hovered");
     }
 }
 
@@ -84,10 +77,12 @@ function renderHexHover(hex_key) {
  * @returns {void}
  */
 function selectHex(hex_key) {
+    if (app.current_tool === tools.TERRAIN_PAINT || app.is_painting) return;
+
     app.selected_hex = hex_key;
     renderHexSelection(hex_key);
-    app.current_tool = "HEX";
-    renderCurrentTool();
+    app.current_tool = "HEX_EDIT";
+    activateTool("HEX_EDIT");
 }
 
 /**
@@ -651,11 +646,24 @@ function renderFactionBorders(hex_key) {
             const [start, end] =
                 edges[edge_index];
 
-            line.setAttribute("x1", start[0]);
-            line.setAttribute("y1", start[1]);
+            // Extend the line by 20% of its length past both endpoints.
+            // The clipping path keeps the extension inside the hex shape.
+            const dx = end[0] - start[0];
+            const dy = end[1] - start[1];
+            const extended_start = [
+                start[0] - dx * 0.2,
+                start[1] - dy * 0.2
+            ];
+            const extended_end = [
+                end[0] + dx * 0.2,
+                end[1] + dy * 0.2
+            ];
 
-            line.setAttribute("x2", end[0]);
-            line.setAttribute("y2", end[1]);
+            line.setAttribute("x1", extended_start[0]);
+            line.setAttribute("y1", extended_start[1]);
+
+            line.setAttribute("x2", extended_end[0]);
+            line.setAttribute("y2", extended_end[1]);
 
             line.setAttribute(
                 "stroke",
@@ -751,12 +759,16 @@ function renderHex(hex_key) {
 
     if (!hex) {
         hex = document.createElement("div");
-        hex.id = `hex-${hex_key.replace(", ", "-")}`;
+        hex.id = `hex-${hex_key.replace(",", "-")}`;
         hex.classList.add("hex");
         hex.dataset.hexKey = hex_key;
-        hex.addEventListener("mouseenter", () => { renderHexHover(hex_key); });
+        hex.addEventListener("click", () => { if (!app.is_painting) selectHex(hex_key); });
+        hex.addEventListener("mouseenter", () => { 
+            renderHexHover(hex_key);
+            if (app.is_painting) paintTerrain(hex_key);
+        });
         hex.addEventListener("mouseleave", () => { renderHexHover(null); });
-        hex.addEventListener("click", () => { selectHex(hex_key); });
+        hex.addEventListener("mousedown", () => { if (app.current_tool === tools.TERRAIN_PAINT) paintTerrain(hex_key); });
         document.getElementById("hex-map-surface").appendChild(hex);
     }
 
@@ -767,10 +779,6 @@ function renderHex(hex_key) {
 
     hex.classList.remove("hex-pointy-top", "hex-flat-top", "hex-square");
     hex.classList.add(`hex-${config.shape}`);
-
-        //interaction
-        // renderHexHover();
-        // renderHexSelection();
 }
 
 //========================================================================================================================================

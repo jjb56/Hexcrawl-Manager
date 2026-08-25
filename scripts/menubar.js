@@ -77,7 +77,7 @@ document.querySelector("#button-tools-terrain-paint").addEventListener("click", 
 
 // Tools - Geography
 document.querySelector("#button-tools-geography").addEventListener("click", () => { 
-    activateTool("GEOGRAPHY")
+    activateTool("GEOGRAPHY");
 });
 
 // Tools - Factions

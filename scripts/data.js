@@ -53,7 +53,7 @@ data: {
 /**
  * Creates a new roll table and assigns ownership to an object.
  * The table itself is stored globally in `app.data.roll_tables`, while the owning object stores only its table ID.
- * @param {string} current_tool The collection that owns the table (e.g. `"geography"` or `"factions"`).
+ * @param {string} current_tool The collection that owns the table (e.g. "geography",  "factions", or "map['3,5']").
  * @param {number} owner_id The ID of the owning object within the selected collection. 
  * @returns {void}
  */
@@ -104,6 +104,8 @@ function refreshRollTableOwner(current_tool, owner_id) {
 /**
  * Deletes a roll table from the global roll table collection.
  * @param {number} roll_table_id The unique ID of the roll table to delete.
+ * @param {string|null} current_tool The collection containing the current owner, if applicable.
+ * @param {number|null} owner_id The ID of the current owner, if applicable.
  * @returns {void}
  */
 function deleteRollTable(roll_table_id, current_tool = null, owner_id = null) {
@@ -337,26 +339,76 @@ function setNestedValue(object, path, value) {
 //========================================================================================================================================
 /**
  * Renders multiple groups of roll tables.
- * The first array of roll table IDs is rendered as editable. All subsequent arrays are rendered as read-only.
- * @param {string} div_id The empty div where the table list will be rendered.
- * @param {Array<Array<number>>} array_of_roll_table_id_arrays An array containing arrays of roll table IDs (ex. [[0,2], [3], [6,7,9]]).
+ * The first array of roll table IDs is rendered as editable.
+ * All subsequent arrays are rendered as read-only.
+ * @param {string} div_id
+ * @param {string} hex_id
  * @returns {void}
  */
-function renderRollTableList(div_id, array_of_roll_table_id_arrays) {
-    //prepare container
+function renderRollTableList(div_id, hex_id) {
     const container = document.getElementById(div_id);
     if (!container) return;
-    container.innerHTML = ""
+    container.innerHTML = "";
+    let has_tables = false;
+    const hex = app.data.map[hex_id];
+    
+    //hex
+    const hex_array = hex.roll_table_ids ?? [];
+    if (hex_array?.length > 0) {
+        const hex_heading = document.createElement("h4");
+        hex_heading.textContent = "Hex Roll Tables";
+        container.appendChild(hex_heading);
 
-    //fill container
-    for (let i = 0; i < array_of_roll_table_id_arrays.length; i++) {
-        const read_only = (i > 0);
+        const hex_table_div = document.createElement("div");
+        hex_table_div.id = `hex-roll-tables-${hex_id}`;
+        container.appendChild(hex_table_div);
+
+        renderRollTables(hex_table_div.id, hex_array, false, "map", hex_id);
+        has_tables = true;
+    }
+
+    //factions
+    let faction_has_tables = false;
+    for (const faction of hex.factions ?? []) {
+        const faction_data = app.data.factions[faction.faction_id];
+
+        if (!faction_data?.roll_table_ids?.length) continue;
+
+        if (!faction_has_tables) {
+            const heading = document.createElement("h4");
+            heading.textContent = "Faction Tables";
+            container.appendChild(heading);
+            faction_has_tables = true;
+        }
+
         const table_div = document.createElement("div");
-        table_div.className = "roll-table-group";
-        table_div.id = `roll-table-group-${i}`;
-
+        table_div.id = `faction-roll-tables-${hex_id}-${faction.faction_id}`;
         container.appendChild(table_div);
-        renderRollTables(table_div.id, array_of_roll_table_id_arrays[i], read_only);
+
+        renderRollTables(table_div.id, faction_data.roll_table_ids, true);
+        has_tables = true;
+    }
+
+    //geography
+    const geography = app.data.geography[hex.geography_id];
+    if (geography?.roll_table_ids?.length > 0) {
+        const geography_heading = document.createElement("h4");
+        geography_heading.textContent = "Geography Tables";
+        container.appendChild(geography_heading);
+
+        const geography_table_div = document.createElement("div");
+        geography_table_div.id = `geography-roll-tables-${hex_id}`;
+        container.appendChild(geography_table_div);
+
+        renderRollTables(geography_table_div.id, geography.roll_table_ids, true);
+        has_tables = true;
+    }
+
+    //nothing exists
+    if (!has_tables) {
+        const none_found = document.createElement("p");
+        none_found.textContent = "No roll tables found";
+        container.appendChild(none_found);
     }
 }
 
@@ -365,6 +417,8 @@ function renderRollTableList(div_id, array_of_roll_table_id_arrays) {
  * @param {string} div_id The empty div where the tables will be rendered.
  * @param {Array} roll_table_id_array Array of roll table IDs (ex. [0, 3, 4]).
  * @param {boolean} read_only Whether the tables are read-only.
+ * @param {string|null} owner_tool Optional owning collection name.
+ * @param {number|null} owner_id Optional owning object ID.
  * @returns {void}
  */
 function renderRollTables(div_id, roll_table_id_array, read_only = false, owner_tool = null, owner_id = null) {
@@ -395,8 +449,8 @@ function renderRollTables(div_id, roll_table_id_array, read_only = false, owner_
  * @param {string} div_id The empty div where the table will be rendered.
  * @param {number} roll_table_id The unique ID of the roll table.
  * @param {boolean} read_only Wether the table is read-only.
- * @param {string|null} owner_tool Optional owning collection name.
- * @param {number|null} owner_id Optional owning object ID.
+ * @param {string|null} owner_tool Optional owning collection name. Needed for deleting tables.
+ * @param {number|null} owner_id Optional owning object ID. Needed for deleting tables.
  * @returns {void}
  */
 function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = null, owner_id = null) {
@@ -413,8 +467,9 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
     const read = read_only ? "readonly" : "";
     const mode_class = read_only ? "roll-table-read-only" : "roll-table-editable";
     const deleteAction = owner_tool && owner_id !== null
-        ? `deleteRollTable(${roll_table_id}, '${owner_tool}', ${owner_id})`
+        ? `deleteRollTable(${roll_table_id}, ${JSON.stringify(owner_tool)}, ${JSON.stringify(owner_id)})`
         : `deleteRollTable(${roll_table_id})`;
+    const escaped_delete_action = deleteAction.replaceAll('"', "&quot;");
     //prepare html
     let html = `
         <table class="roll-table ${mode_class}">
@@ -435,7 +490,7 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
                         ${read}
                     >`;
     if (!read_only) html += `
-                    <button class="bad-button" onclick="${deleteAction}">
+                    <button class="bad-button" onclick="${escaped_delete_action}">
                         Delete
                     </button>`;
     html += `

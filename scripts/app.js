@@ -13,13 +13,16 @@ const tools = Object.freeze({
     FACTIONS: "FACTIONS",
     HEX_CONFIGURATION: "HEX_CONFIGURATION",
     TERRAIN_PAINT: "TERRAIN_PAINT",
-    EDIT_HEX: "EDIT_HEX"
+    HEX_EDIT: "HEX_EDIT"
 });
 
 let app = {
     current_tool: tools.NONE,
-	selected_hex: null,
-	hovered_hex: null,
+	selected_hex: null, //string coordinates
+	hovered_hex: null, //string coordinates
+	terrain_painting: null, //id of geography
+	is_painting: false, //whether hovered hex will auto change to the new hex type. altered by paintTerrain();
+	terrain_painting_affected: [],
     menu: {
         is_active: false,
         selected: null
@@ -40,11 +43,21 @@ let app = {
 			"3,5": {
 				geography_id: 0,
 				description: "First Test Cell",
+				cities: [ //optional
+					{
+						name: "City of Doom",
+						population: 10000,
+						description: ""
+					}
+				],
 				factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
 					{ faction_id: 1, presence: 400 }
 				], 
-				landmarks: ["An obelisk or something"], //optional, not drawn on hex
-				roll_tables: [3], //optional, but always displays the geography and faction-related tables below the hex tables
+				landmarks: [ //optional
+                    { name: "Stone", icon: "", description: "An obelisk or something" }
+                ],
+				roll_table_ids: [3], //optional, but always displays the geography and faction-related tables below the hex tables
+				notes: ["A dangerous zone full of mortals"] //optional
 			},
 			"3,6": {
 				geography_id: 2,
@@ -53,31 +66,30 @@ let app = {
 					{ faction_id: 1, presence: 400 },
 					{ faction_id: 4, presence: 300 }
 				], 
-				landmarks: ["An obelisk or something"], //optional, not drawn on hex
-				roll_tables: [], //optional, but always displays the geography and faction-related tables below the hex tables
+				landmarks: [ //optional
+                    { name: "Stone", icon: "", description: "Another obelisk or something" }
+                ]
 			},
 			"4,6": {
 				geography_id: 0,
 				description: "Third Test Cell",
 				factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
 					{ faction_id: 4, presence: 300 }
-				], 
-				landmarks: ["An obelisk or something"], //optional, not drawn on hex
-				roll_tables: [], //optional, but always displays the geography and faction-related tables below the hex tables
+				]
 			}
 		},
         geography: {
 			0: {
 				name: 'Forest',
 				background_color: '#047000',
-				icon: '/|\\',
+				icon: '🌳',
 				icon_color: '#00be00',
 				roll_table_ids: []
 			},
 			2: {
 				name: 'Desert',
 				background_color: '#ebb400',
-				icon: '~',
+				icon: '🌵',
 				icon_color: '#ffee8d',
 				roll_table_ids: [5]
 			}
@@ -141,38 +153,44 @@ let app = {
 //              Tool open/close
 //========================================================================================================================================
 function activateTool(tool) {
-  app.current_tool = tool;
-  const hide_var = "hide";
-  
-    // Hide all tool areas
-  document.querySelectorAll(".tool-area").forEach(div => {
-    div.classList.add(hide_var);
-  });
+	app.current_tool = tool;
+	const hide_var = "hide";
+	
+		// Hide all tool areas
+	document.querySelectorAll(".tool-area").forEach(div => {
+		div.classList.add(hide_var);
+	});
 
-  switch (tool) {
-    case "GEOGRAPHY":
-      document.getElementById("properties-geography")?.classList.remove(hide_var);
-      renderCurrentTool();
-      return;
+	switch (tool) {
+		case "GEOGRAPHY":
+			document.getElementById("properties-geography")?.classList.remove(hide_var);
+			renderCurrentTool();
+			return;
 
-    case "FACTIONS":
-      document.getElementById("properties-factions")?.classList.remove(hide_var);
-      renderCurrentTool();
-      return;
+		case "FACTIONS":
+			document.getElementById("properties-factions")?.classList.remove(hide_var);
+			renderCurrentTool();
+			return;
 
-    case "HEX_CONFIGURATION":
-      document.getElementById("properties-hex-configuration")?.classList.remove(hide_var);
-      return;
+		case "HEX_CONFIGURATION":
+			document.getElementById("properties-hex-configuration")?.classList.remove(hide_var);
+			return;
 
-    case "TERRAIN_PAINT":
-      document.getElementById("properties-terrain-paint")?.classList.remove(hide_var);
-      return;
+		case "TERRAIN_PAINT":
+			document.getElementById("properties-terrain-paint")?.classList.remove(hide_var);
+			renderCurrentTool();
+			return;
 
-    case "NONE":
-    default:
-      document.getElementById("properties-none")?.classList.remove(hide_var);
-      return;
-  }
+		case "HEX_EDIT":
+			document.getElementById("properties-hex-edit")?.classList.remove(hide_var);
+			renderCurrentTool();
+			return;
+
+		case "NONE":
+		default:
+			document.getElementById("properties-none")?.classList.remove(hide_var);
+			return;
+	}
 }
 
 activateTool("NONE");
@@ -193,16 +211,20 @@ function resetTimer(timer) {
 //re-render tool
 function renderCurrentTool() {
 	switch (app.current_tool) {
-		case "GEOGRAPHY":
+		case tools.GEOGRAPHY:
 			renderTerrainList();
 			break;
 
-		case "FACTIONS":
+		case tools.FACTIONS:
 			renderFactionList();
 			break;
 
-		case "EDIT_HEX":
-			console.log("hex tool")//renderHexTool();
+		case tools.HEX_EDIT:
+			renderHexEditTool();
+			break;
+
+		case tools.TERRAIN_PAINT:
+			renderTerrainPaintList();
 			break;
 
 		default:
