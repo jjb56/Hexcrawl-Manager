@@ -121,10 +121,9 @@ function renderFactionList() {
         button.className = "faction-button";
 
         const icon = document.createElement("span");
-        icon.className = "faction-preview";
+        icon.className = "hex-faction-flag";
         icon.textContent = faction.icon;
         icon.style.backgroundColor = faction.color;
-        icon.style.color = faction.color;
 
         const name = document.createElement("span");
         name.className = "faction-label";

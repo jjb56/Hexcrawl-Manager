@@ -50,89 +50,6 @@ function deleteTerrainType(terrain_id) {
     commitToHistory(`Deleted ${terrain_data.name}`, undo_action, do_action);
 }
 
-// ======================== May Be Optional Under New Framework ========================
-
-/**
- * Updates the name of the selected terrain to the value given.
- * @param {*} terrain_id The ID of the terrain to update.
- * @param {*} value The new name of the terrain
- * @returns {void}
- */
-function updateTerrainName(terrain_id, value) {
-    //set data
-    const old_value = app.data.geography[terrain_id].name;
-    if (old_value === value) return;
-
-    //create actions
-    const do_action = () => app.data.geography[terrain_id].name = value;
-    const undo_action = () => app.data.geography[terrain_id].name = old_value;
-
-    //execute actions
-    do_action();
-    commitToHistory(`Renamed ${old_value} to ${value}`, undo_action, do_action);
-}
-
-function updateTerrainBackgroundColor(terrain_id, value) {
-    // Updates the background color of the selected terrain
-    //set data
-    const old_value = app.data.geography[terrain_id].background_color;
-    if (old_value === value) return;
-
-    //create actions
-    const do_action = () => app.data.geography[terrain_id].background_color = value;
-    const undo_action = () => app.data.geography[terrain_id].background_color = old_value;
-
-    //execute actions
-    do_action();
-    commitToHistory(`Changed ${app.data.geography[terrain_id].name} background color`, undo_action, do_action);
-}
-
-function updateTerrainIcon(terrain_id, value) {
-    // Updates the icon of the selected terrain
-    //set data
-    const old_value = app.data.geography[terrain_id].icon;
-    if (old_value === value) return;
-
-    //create actions
-    const do_action = () => app.data.geography[terrain_id].icon = value;
-    const undo_action = () => app.data.geography[terrain_id].icon = old_value;
-
-    //execute actions
-    do_action();
-    commitToHistory(`Changed ${app.data.geography[terrain_id].name} icon`, undo_action, do_action);
-}
-
-function updateTerrainIconColor(terrain_id, value) {
-    // Updates the icon color of the selected terrain
-    //set data
-    const old_value = app.data.geography[terrain_id].icon_color;
-    if (old_value === value) return;
-
-    //create actions
-    const do_action = () => app.data.geography[terrain_id].icon_color = value;
-    const undo_action = () => app.data.geography[terrain_id].icon_color = old_value;
-
-    //execute actions
-    do_action();
-    commitToHistory(`Changed ${app.data.geography[terrain_id].name} icon color`, undo_action, do_action);
-}
-
-//may be optional
-function saveTerrainChanges(terrain_id, div_element) {
-    //update the ids of the changed items
-    clearTimeout(edit_timer);
-
-    const name = div_element.querySelector(`#terrain-name-${terrain_id}`).value;
-    const background_color = div_element.querySelector(`#terrain-background-color-${terrain_id}`).value;
-    const icon = div_element.querySelector(`#terrain-icon-${terrain_id}`).value;
-    const icon_color = div_element.querySelector(`#terrain-icon-color-${terrain_id}`).value;
-
-    updateTerrainName(terrain_id, name);
-    updateTerrainBackgroundColor(terrain_id, background_color);
-    updateTerrainIcon(terrain_id, icon);
-    updateTerrainIconColor(terrain_id, icon_color);
-}
-
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
@@ -212,10 +129,10 @@ function renderTerrain(div_id, terrain_id) {
     editor.innerHTML = "";
     editor.innerHTML = `
         <div class="innerdiv">
-            name <input id="terrain-name-${terrain_id}" type="text" value="${terrain.name}">
-            background color <input id="terrain-background-color-${terrain_id}" type="color" value="${terrain.background_color}">
-            icon <input id="terrain-icon-${terrain_id}" type="text" value="${terrain.icon}">
-            icon color <input id="terrain-icon-color-${terrain_id}" type="color" value="${terrain.icon_color}">
+            name <input id="terrain-name-${terrain_id}" type="text" value="${terrain.name}" data-history-path="geography.${terrain_id}.name">
+            background color <input id="terrain-background-color-${terrain_id}" type="color" value="${terrain.background_color}" data-history-path="geography.${terrain_id}.background_color">
+            icon <input id="terrain-icon-${terrain_id}" type="text" value="${terrain.icon}" data-history-path="geography.${terrain_id}.icon">
+            icon color <input id="terrain-icon-color-${terrain_id}" type="color" value="${terrain.icon_color}" data-history-path="geography.${terrain_id}.icon_color">
             <div id="roll-tables">
                 <h4>Roll Tables</h4>
                 <div id="terrain-roll-tables-${terrain_id}"></div>
@@ -230,15 +147,8 @@ function renderTerrain(div_id, terrain_id) {
     add_roll_table_button.className = "good-button";
     add_roll_table_button.onclick = () => createRollTable("geography", terrain_id);
 
-    //save
-    const inputs = editor.querySelectorAll("input");
-
-    inputs.forEach(input => {
-        input.onblur = () => saveTerrainChanges(terrain_id, editor);
-    });
-
-    // re-render terrain info when any field inside the terrain editor loses focus
-    editor.addEventListener("focusout", event => {
+    // re-render terrain info when any field inside the terrain editor changes
+    editor.addEventListener("change", event => {
         if (event.target.matches("input, textarea, select")) {
             setTimeout(() => renderTerrainList(), 0);
         }

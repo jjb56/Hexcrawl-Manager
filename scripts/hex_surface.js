@@ -92,51 +92,26 @@ function selectHex(hex_key) {
  */
 function renderHexSelection(hex_key) {
     // Remove previous selection state.
-    document
-        .querySelectorAll(".hex-selected")
-        .forEach(hex => hex.classList.remove("hex-selected"));
-
+    document.querySelectorAll(".hex-selected").forEach(hex => hex.classList.remove("hex-selected"));
     // Remove previous selection borders.
-    document
-        .querySelectorAll(".hex-selection-border")
-        .forEach(border => border.remove());
+    document.querySelectorAll(".hex-selection-border").forEach(border => border.remove());
+    if (hex_key === null) return;
 
-    if (hex_key === null) {
-        return;
-    }
-
-    const hex = document.querySelector(
-        `[data-hex-key="${hex_key}"]`
-    );
-
-    if (!hex) {
-        return;
-    }
+    const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
+    if (!hex) return;
 
     // Raise the entire hex above its neighbors.
     hex.classList.add("hex-selected");
 
     const config = app.data.hex_configuration;
-
-    const svg = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "svg"
-    );
-
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add("hex-selection-border");
-
-    svg.setAttribute(
-        "viewBox",
-        `0 0 ${config.cell_width} ${config.cell_height}`
-    );
-
+    svg.setAttribute("viewBox", `0 0 ${config.cell_width} ${config.cell_height}`);
     svg.setAttribute("width", config.cell_width);
     svg.setAttribute("height", config.cell_height);
 
     let points;
-
     switch (config.shape) {
-
         case "pointy-top":
             points = [
                 [config.cell_width / 2, 0],
@@ -172,16 +147,8 @@ function renderHexSelection(hex_key) {
             return;
     }
 
-    const polygon = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-    );
-
-    polygon.setAttribute(
-        "points",
-        points.map(point => `${point[0]},${point[1]}`).join(" ")
-    );
-
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    polygon.setAttribute("points", points.map(point => `${point[0]},${point[1]}`).join(" "));
     polygon.setAttribute("fill", "none");
     polygon.setAttribute("stroke", "white");
     polygon.setAttribute("stroke-width", 3);
@@ -275,112 +242,111 @@ function renderHexCoordinates(hex_key) {
 /**
  * Renders the faction borders of a single hex cell.
  *
- * Factions are drawn from highest presence to lowest presence.
- * Each faction receives a border width proportional to its presence.
+ * Factions are drawn from highest presence to lowest presence. Each faction receives a border width proportional to its presence.
  * An edge is omitted when the neighboring cell contains that faction.
  *
- * The faction border is clipped to the actual shape of the cell so
- * the stroke cannot visually extend outside the cell.
- *
+ * The faction border is clipped to the actual shape of the cell so the stroke cannot visually extend outside the cell.
  * @param {string} hex_key The string containing the x and y map coordinates of the cell.
  * @returns {void}
  */
+function refreshFactionBorderNeighbors(hex_key) {
+    const [x, y] = hex_key.split(",").map(Number);
+    const shape = app.data.hex_configuration.shape;
+    let neighbors;
+
+    if (shape === "pointy-top") {
+        neighbors = y % 2 === 0 ? [
+            `${x},${y - 1}`,
+            `${x + 1},${y}`,
+            `${x},${y + 1}`,
+            `${x - 1},${y + 1}`,
+            `${x - 1},${y}`,
+            `${x - 1},${y - 1}`
+        ] : [
+            `${x + 1},${y - 1}`,
+            `${x + 1},${y}`,
+            `${x + 1},${y + 1}`,
+            `${x},${y + 1}`,
+            `${x - 1},${y}`,
+            `${x},${y - 1}`
+        ];
+
+    } else if (shape === "flat-top") {
+        neighbors = x % 2 === 0 ? [
+            `${x},${y - 1}`,
+            `${x + 1},${y - 1}`,
+            `${x + 1},${y}`,
+            `${x},${y + 1}`,
+            `${x - 1},${y}`,
+            `${x - 1},${y - 1}`
+        ] : [
+            `${x},${y - 1}`,
+            `${x + 1},${y}`,
+            `${x + 1},${y + 1}`,
+            `${x},${y + 1}`,
+            `${x - 1},${y + 1}`,
+            `${x - 1},${y}`
+        ];
+
+    } else if (shape === "square") {
+        neighbors = [
+            `${x},${y - 1}`,
+            `${x + 1},${y}`,
+            `${x},${y + 1}`,
+            `${x - 1},${y}`
+        ];
+
+    } else {
+        return;
+    }
+
+    renderFactionBorders(hex_key);
+    for (const neighbor_key of neighbors) {
+        renderFactionBorders(neighbor_key);
+    }
+}
+
 function renderFactionBorders(hex_key) {
     const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
     const hex_data = app.data.map[hex_key];
     const config = app.data.hex_configuration;
-
     if (!hex) return;
 
     let border_surface = hex.querySelector(".hex-faction-borders");
 
-    // ============================================================
     // NO FACTION DATA
-    // ============================================================
-
-    if (
-        !hex_data ||
-        !hex_data.factions ||
-        hex_data.factions.length === 0 ||
-        config.faction_border_width <= 0
-    ) {
-        if (border_surface) {
-            border_surface.remove();
-        }
-
+    if (!hex_data || !hex_data.factions || hex_data.factions.length === 0 || config.faction_border_width <= 0) {
+        if (border_surface) border_surface.remove();
         return;
     }
 
-    // ============================================================
     // CREATE SVG
-    // ============================================================
-
     if (!border_surface) {
-        border_surface = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg"
-        );
-
+        border_surface = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         border_surface.classList.add("hex-faction-borders");
-
         hex.appendChild(border_surface);
     }
-
-    border_surface.setAttribute(
-        "viewBox",
-        `0 0 ${config.cell_width} ${config.cell_height}`
-    );
-
+    border_surface.setAttribute("viewBox", `0 0 ${config.cell_width} ${config.cell_height}`);
     border_surface.setAttribute("width", config.cell_width);
     border_surface.setAttribute("height", config.cell_height);
+    border_surface.replaceChildren(); // Remove anything rendered during the previous pass.
 
-    // Remove anything rendered during the previous pass.
-    border_surface.replaceChildren();
-
-    // ============================================================
     // SORT FACTIONS
-    // ============================================================
-
-    // Copy the array so rendering never modifies the map data.
     const factions = [...hex_data.factions];
-
-    // Strongest faction is drawn first.
     factions.sort((a, b) => b.presence - a.presence);
-
-    const strongest_presence = factions[0].presence;
-
+    const strongest_presence = factions[0]?.presence ?? 0;
     if (strongest_presence <= 0) {
+        if (border_surface <= 0) border_surface.remove();
         return;
     }
 
-    // ============================================================
     // HEX GEOMETRY
-    // ============================================================
-
     const [x, y] = hex_key.split(",").map(Number);
-
     let neighbors = [];
     let edges = [];
     let clip_points = [];
 
-    // ------------------------------------------------------------
-    // POINTY-TOP
-    // ------------------------------------------------------------
-
-    if (config.shape === "pointy-top") {
-
-        /*
-            Physical edges:
-
-                   0
-                 /───\
-              5 /     \ 1
-               |       |
-              4 \     / 2
-                 \───/
-                   3
-        */
-
+    if (config.shape === "pointy-top") { // POINTY-TOP
         const points = [
             [config.cell_width / 2, 0],                      // 0
             [config.cell_width, config.cell_height * 0.25], // 1
@@ -389,7 +355,6 @@ function renderFactionBorders(hex_key) {
             [0, config.cell_height * 0.75],                 // 4
             [0, config.cell_height * 0.25]                   // 5
         ];
-
         edges = [
             [points[0], points[1]], // 0 upper-right
             [points[1], points[2]], // 1 right
@@ -398,20 +363,7 @@ function renderFactionBorders(hex_key) {
             [points[4], points[5]], // 4 left
             [points[5], points[0]]  // 5 upper-left
         ];
-
         clip_points = points;
-
-        /*
-            Your getHexXY() uses odd rows shifted right.
-
-            Even row:
-                  NW = x-1,y-1
-                  NE = x,y-1
-
-            Odd row:
-                  NW = x,y-1
-                  NE = x+1,y-1
-        */
 
         if (y % 2 === 0) {
             neighbors = [
@@ -432,22 +384,8 @@ function renderFactionBorders(hex_key) {
                 `${x},${y - 1}`        // 5 upper-left
             ];
         }
-    }
 
-    // ------------------------------------------------------------
-    // FLAT-TOP
-    // ------------------------------------------------------------
-
-    else if (config.shape === "flat-top") {
-
-        /*
-                   0 ───── 1
-                  /         \
-                5             2
-                  \         /
-                   4 ───── 3
-        */
-
+    } else if (config.shape === "flat-top") { // FLAT-TOP
         const points = [
             [config.cell_width * 0.25, 0],                    // 0
             [config.cell_width * 0.75, 0],                    // 1
@@ -456,7 +394,6 @@ function renderFactionBorders(hex_key) {
             [config.cell_width * 0.25, config.cell_height],   // 4
             [0, config.cell_height / 2]                       // 5
         ];
-
         edges = [
             [points[0], points[1]], // 0 top
             [points[1], points[2]], // 1 upper-right
@@ -465,20 +402,7 @@ function renderFactionBorders(hex_key) {
             [points[4], points[5]], // 4 lower-left
             [points[5], points[0]]  // 5 upper-left
         ];
-
         clip_points = points;
-
-        /*
-            Your getHexXY() uses odd columns shifted DOWN.
-
-            Even column:
-                  upper-right = x+1,y-1
-                  lower-right = x+1,y
-
-            Odd column:
-                  upper-right = x+1,y
-                  lower-right = x+1,y+1
-        */
 
         if (x % 2 === 0) {
             neighbors = [
@@ -499,36 +423,20 @@ function renderFactionBorders(hex_key) {
                 `${x - 1},${y}`        // 5 upper-left
             ];
         }
-    }
 
-    // ------------------------------------------------------------
-    // SQUARE
-    // ------------------------------------------------------------
-
-    else if (config.shape === "square") {
-
-        /*
-              0
-           ───────
-         3 │     │ 1
-           ───────
-              2
-        */
-
+    } else if (config.shape === "square") { // SQUARE
         const points = [
             [0, 0],
             [config.cell_width, 0],
             [config.cell_width, config.cell_height],
             [0, config.cell_height]
         ];
-
         edges = [
             [points[0], points[1]], // 0 top
             [points[1], points[2]], // 1 right
             [points[2], points[3]], // 2 bottom
             [points[3], points[0]]  // 3 left
         ];
-
         clip_points = points;
 
         neighbors = [
@@ -537,117 +445,44 @@ function renderFactionBorders(hex_key) {
             `${x},${y + 1}`, // 2 bottom
             `${x - 1},${y}`  // 3 left
         ];
-    }
 
-    // Unknown shape.
-    else {
+    } else { // Unknown shape.
         return;
     }
 
-    // ============================================================
     // CREATE CLIPPING PATH
-    // ============================================================
-
-    /*
-        SVG strokes are centered on their path.
-
-        For example, a 5px line drawn directly on an edge extends
-        2.5px outside that edge.
-
-        The clip path prevents that outside half from appearing.
-    */
-
     const clip_id = `faction-clip-${hex_key.replace(",", "-")}`;
-
-    const defs = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "defs"
-    );
-
-    const clip_path = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "clipPath"
-    );
-
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const clip_path = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
     clip_path.setAttribute("id", clip_id);
     clip_path.setAttribute("clipPathUnits", "userSpaceOnUse");
 
-    const clip_polygon = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-    );
-
-    clip_polygon.setAttribute(
-        "points",
-        clip_points.map(point => `${point[0]},${point[1]}`).join(" ")
-    );
-
+    const clip_polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    clip_polygon.setAttribute("points", clip_points.map(point => `${point[0]},${point[1]}`).join(" "));
     clip_path.appendChild(clip_polygon);
     defs.appendChild(clip_path);
     border_surface.appendChild(defs);
 
     // Everything drawn in this SVG is clipped to the cell.
-    border_surface.setAttribute(
-        "clip-path",
-        `url(#${clip_id})`
-    );
+    border_surface.setAttribute("clip-path", `url(#${clip_id})`);
 
-    // ============================================================
     // DRAW FACTION BORDERS
-    // ============================================================
-
     for (const faction of factions) {
-
-        const faction_info =
-            app.data.factions[faction.faction_id];
-
+        const faction_info = app.data.factions[faction.faction_id];
         if (!faction_info) continue;
         if (faction.presence <= 0) continue;
+        const width_ratio = faction.presence / strongest_presence;
+        const border_width = config.faction_border_width * width_ratio;
 
-        // Strongest faction gets the full configured width.
-        const width_ratio =
-            faction.presence / strongest_presence;
-
-        const border_width =
-            config.faction_border_width * width_ratio;
-
-        // --------------------------------------------------------
         // Check every possible edge.
-        // --------------------------------------------------------
+        for (let edge_index = 0; edge_index < edges.length; edge_index++) {
+            const neighbor_data = app.data.map[neighbors[edge_index]];
+            const faction_present = neighbor_data?.factions?.some(neighbor_faction => neighbor_faction.faction_id === faction.faction_id) ?? false;
+            if (faction_present) continue;
 
-        for (
-            let edge_index = 0;
-            edge_index < edges.length;
-            edge_index++
-        ) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            const [start, end] = edges[edge_index];
 
-            const neighbor_data =
-                app.data.map[neighbors[edge_index]];
-
-            const faction_present =
-                neighbor_data?.factions?.some(
-                    neighbor_faction =>
-                        neighbor_faction.faction_id ===
-                        faction.faction_id
-                ) ?? false;
-
-            // Same faction exists on the other side.
-            // Therefore this is an internal edge.
-            if (faction_present) {
-                continue;
-            }
-
-            const line =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "line"
-                );
-
-            const [start, end] =
-                edges[edge_index];
-
-            // Extend the line by 20% of its length past both endpoints.
-            // The clipping path keeps the extension inside the hex shape.
             const dx = end[0] - start[0];
             const dy = end[1] - start[1];
             const extended_start = [
@@ -665,32 +500,10 @@ function renderFactionBorders(hex_key) {
             line.setAttribute("x2", extended_end[0]);
             line.setAttribute("y2", extended_end[1]);
 
-            line.setAttribute(
-                "stroke",
-                faction_info.color
-            );
-
-            line.setAttribute(
-                "stroke-width",
-                border_width
-            );
-
-            line.setAttribute(
-                "stroke-opacity",
-                config.faction_border_alpha
-            );
-
-            /*
-                Butt caps prevent the line from extending past
-                either endpoint.
-
-                The clipping path additionally prevents the
-                stroke from appearing outside the cell.
-            */
-            line.setAttribute(
-                "stroke-linecap",
-                "butt"
-            );
+            line.setAttribute("stroke", faction_info.color);
+            line.setAttribute("stroke-width", border_width);
+            line.setAttribute("stroke-opacity", config.faction_border_alpha);
+            line.setAttribute("stroke-linecap", "butt");
 
             border_surface.appendChild(line);
         }

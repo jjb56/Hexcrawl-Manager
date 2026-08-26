@@ -4,9 +4,35 @@
 
 let edit_timer = null;
 
+document.addEventListener("change", event => {
+    console.log("HISTORY CHANGE:", event.target, event.target.dataset.historyPath);
+    //get data
+    const element = event.target;
+    if (!element.dataset.historyPath) return;
+    const path = element.dataset.historyPath;
+    const old_value = getDataFromHistoryPath(path);
+    const new_value = getFormValue(element);
+    if (old_value === new_value) return;
+
+    //actions
+    const do_action = () => { setDataFromHistoryPath(path, new_value); };
+    const undo_action = () => { setDataFromHistoryPath(path, old_value); };
+
+    //execution
+    do_action();
+    commitToHistory(`Changed ${path}`, undo_action, do_action);
+});
+
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================
+/**
+ * Commits an action to the undo history and clears the redo history.
+ * @param {string} action_name Short description of the edit made.
+ * @param {Function} undo_method How to undo the change.
+ * @param {Function} redo_method How to replicate the change.
+ * @returns {void}
+ */
 function commitToHistory(action_name, undo_method, redo_method) {
     //Parameters: 
     //Functionality: Commits the action to the history stack
@@ -21,31 +47,44 @@ function commitToHistory(action_name, undo_method, redo_method) {
     app.history.redo = [];
 }
 
-function saveEditChanges(element_id) {
-    //saves the changes taken in a form element
+/**
+ * Retrieves a value from the application data object using a dot-separated property path.
+ * @param {string} path Dot-separated path to the value in `app.data`.
+ * @returns {*} The value stored at the specified path.
+ */
+function getDataFromHistoryPath(path) {
+    return path.split(".").reduce((object, key) => object[key], app.data);
 }
 
-/*
-data: {
-    roll_tables: {
-        0: {
-            name: "",
-            rows: [
-                ["", ""],
-                ["", ""]
-            ]
-        }
-    },
-    geography/factions/etc: {
-        0: {
-            name: ""
-            roll_table_ids: [0]
-        };
+/**
+ * Sets a value in the application data object using a dot-separated property path.
+ * @param {string} path Dot-separated path to the destination in `app.data`.
+ * @param {*} value The value to store at the specified path.
+ * @returns {void}
+ */
+function setDataFromHistoryPath(path, value) {
+    const keys = path.split(".");
+    const last_key = keys.pop();
+
+    const target = keys.reduce((object, key) => object[key], app.data);
+    target[last_key] = value;
+
+    if (path.includes(".factions.") && path.endsWith(".faction_id")) {
+        refreshFactionBorderNeighbors(app.selected_hex);
     }
 }
-*/
 
-//TODO: fix rendering and css of tables
+/**
+ * Switches between different types of forms and returns its value.
+ * @param {string} element The form to retrieve the value from.
+ * @returns {*} The value of the form element.
+ */
+function getFormValue(element) {
+    if (element.type === "checkbox") return element.checked;
+    if (element.type === "number") return Number(element.value);
+    if (element.dataset.valueType === "number") return element.value === "" ? null : Number(element.value);
+    return element.value;
+}
 
 //========================================================================================================================================
 //              Roll Table Functions
@@ -53,7 +92,7 @@ data: {
 /**
  * Creates a new roll table and assigns ownership to an object.
  * The table itself is stored globally in `app.data.roll_tables`, while the owning object stores only its table ID.
- * @param {string} current_tool The collection that owns the table (e.g. "geography",  "factions", or "map['3,5']").
+ * @param {string} current_tool The collection that owns the table (e.g. "geography",  "factions", or "map").
  * @param {number} owner_id The ID of the owning object within the selected collection. 
  * @returns {void}
  */

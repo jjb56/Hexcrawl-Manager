@@ -146,7 +146,7 @@ function renderHexHeader() {
 
     const coordinates = document.createElement("span");
     coordinates.id = "hex-coordinates";
-    coordinates.textContent = `${x}, ${y}`;
+    coordinates.textContent = `${x},${y}`;
 
     title.textContent = "Region ";
     title.appendChild(coordinates);
@@ -255,9 +255,10 @@ function renderHexFactions() {
     faction_list.id = "hex-faction-list";
 
     for (let i = 0; i < factions.length; i++) {
-        const faction_data = factions[i];
-        const faction = app.data.factions[faction_data.faction_id];
-        if (!faction) continue;
+        const faction_data = factions[i]; // the actual object contents
+        // Store an unselected faction as null and allow it to render safely.
+        const faction_id = faction_data.faction_id ?? null;
+        const faction = faction_id ? app.data.factions[faction_id] : null;
 
         const row = document.createElement("div");
         row.className = "hex-faction-row";
@@ -265,14 +266,38 @@ function renderHexFactions() {
         // Faction flag
         const flag = document.createElement("span");
         flag.className = "hex-faction-flag";
-        flag.style.backgroundColor = faction.color;
-        flag.textContent = faction.icon;
-        flag.title = faction.name;
+        flag.style.backgroundColor = faction?.color || "transparent";
+        flag.textContent = faction?.icon || "";
+        flag.title = faction?.name || "";
 
-        // Faction name
-        const name = document.createElement("span");
+        // Faction selector
+        const name = document.createElement("select");
         name.className = "hex-faction-name";
-        name.textContent = faction.name;
+        name.dataset.valueType = "number";
+        name.dataset.historyPath = `map.${app.selected_hex}.factions.${i}.faction_id`;
+
+        const choose_option = document.createElement("option");
+        choose_option.value = "";
+        choose_option.textContent = "-- Choose --";
+        name.appendChild(choose_option);
+
+        //loop through all factions and make entries for them in the dropdown
+        for (const id in app.data.factions) {
+            const faction_option = document.createElement("option");
+            faction_option.value = id;
+            faction_option.textContent = app.data.factions[id].name;
+            name.appendChild(faction_option);
+        }
+        name.value = faction_id ?? ""; //
+        name.addEventListener("change", () => {
+            const selected_id = name.value === "" ? null : Number(name.value);
+            const selected_faction = selected_id === null ? null : app.data.factions[selected_id];
+
+            flag.style.backgroundColor = selected_faction?.color || "";
+            flag.textContent = selected_faction?.icon || "";
+            flag.title = selected_faction?.name || "";
+            remove.title = selected_faction ? `Remove ${selected_faction.name}` : "Remove faction";
+        });
 
         // Presence
         const presence = document.createElement("input");
@@ -280,13 +305,42 @@ function renderHexFactions() {
         presence.className = "hex-faction-presence";
         presence.min = "0";
         presence.value = faction_data.presence;
+        presence.dataset.historyPath = `map.${app.selected_hex}.factions.${i}.presence`;
+        presence.addEventListener("change", () => renderFactionBorders(app.selected_hex));
 
         // Remove faction button
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "bad-button";
         remove.textContent = "-";
-        remove.title = `Remove ${faction.name}`;
+        remove.title = faction ? `Remove ${faction.name}` : "Remove faction";
+        remove.addEventListener("click", () => {
+            const hex_key = app.selected_hex;
+            const removed_faction = app.data.map[hex_key].factions[i];
+            const do_action = () => {
+                const hex = app.data.map[hex_key];
+                if (hex.factions.length === 1) {
+                    delete hex.factions;
+                } else {
+                    hex.factions.splice(i, 1);
+                }
+                refreshFactionBorderNeighbors(hex_key);
+            };
+            const undo_action = () => {
+                const hex = app.data.map[hex_key];
+                if (!hex.factions) {
+                    hex.factions = [removed_faction];
+                } else {
+                    hex.factions.splice(i, 0, removed_faction);
+                }
+                refreshFactionBorderNeighbors(hex_key);
+            };
+
+            do_action();
+            commitToHistory(`Removed faction from region ${hex_key}`, undo_action, do_action);
+            renderHexEditTool();
+            renderFactionBorders(hex_key);
+        });
 
         row.appendChild(flag);
         row.appendChild(name);
@@ -466,6 +520,112 @@ function renderHexAddFeature() {
     add_button.className = "good-button";
     add_button.type = "button";
     add_button.textContent = "+ Add";
+    add_button.addEventListener("click", () => { 
+        switch (document.getElementById(select.id).value) {
+            case "city": {
+                const city = {
+                    name: "New city",
+                    population: 0,
+                    description: ""
+                };
+                let created_array = false;
+                const do_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    if (!Array.isArray(data.cities)) {
+                        data.cities = [];
+                        created_array = true;
+                    }
+                    data.cities.push(city);
+                };
+                const undo_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    data.cities.pop();
+                    if (created_array && data.cities.length === 0) delete data.cities;
+                };
+                do_action();
+                commitToHistory(`Added city to region ${app.selected_hex}`, undo_action, do_action);
+                break;
+            }
+
+            case "landmark": {
+                const landmark = {
+                    name: "New landmark",
+                    icon: "",
+                    description: ""
+                };
+                let created_array = false;
+                const do_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    if (!Array.isArray(data.landmarks)) {
+                        data.landmarks = [];
+                        created_array = true;
+                    }
+                    data.landmarks.push(landmark);
+                };
+                const undo_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    data.landmarks.pop();
+                    if (created_array && data.landmarks.length === 0) delete data.landmarks;
+                };
+                do_action();
+                commitToHistory(`Added landmark to region ${app.selected_hex}`, undo_action, do_action);
+                break;
+            }
+
+            case "faction": {
+                const faction = {
+                    faction_id: null,
+                    presence: 400
+                };
+                let created_array = false;
+                const do_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    if (!Array.isArray(data.factions)) {
+                        data.factions = [];
+                        created_array = true;
+                    }
+                    data.factions.push(faction);
+                };
+                const undo_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    data.factions.pop();
+                    if (created_array && data.factions.length === 0) delete data.factions;
+                };
+                do_action();
+                commitToHistory(`Added faction to region ${app.selected_hex}`, undo_action, do_action);
+                break;
+            }
+
+            case "notes": {
+                const note = "";
+                let created_array = false;
+                const do_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    if (!Array.isArray(data.notes)) {
+                        data.notes = [];
+                        created_array = true;
+                    }
+                    data.notes.push(note);
+                };
+                const undo_action = () => {
+                    const data = app.data.map[app.selected_hex];
+                    data.notes.pop();
+                    if (created_array && data.notes.length === 0) delete data.notes;
+                };
+                do_action();
+                commitToHistory(`Added note to region ${app.selected_hex}`, undo_action, do_action);
+                break;
+            }
+
+            case "roll table":
+                createRollTable("map", app.selected_hex);
+                break;
+
+            default:
+                console.log("No selection.");
+        }
+        renderHexEditTool();
+    });
 
     section.appendChild(select);
     section.appendChild(add_button);
