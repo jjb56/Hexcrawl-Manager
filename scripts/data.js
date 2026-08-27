@@ -5,9 +5,9 @@
 let edit_timer = null;
 
 document.addEventListener("change", event => {
-    console.log("HISTORY CHANGE:", event.target, event.target.dataset.historyPath);
     //get data
     const element = event.target;
+    if (element.type === "file") return;
     if (!element.dataset.historyPath) return;
     const path = element.dataset.historyPath;
     const old_value = getDataFromHistoryPath(path);
@@ -15,8 +15,14 @@ document.addEventListener("change", event => {
     if (old_value === new_value) return;
 
     //actions
-    const do_action = () => { setDataFromHistoryPath(path, new_value); };
-    const undo_action = () => { setDataFromHistoryPath(path, old_value); };
+    const do_action = () => {
+        setDataFromHistoryPath(path, new_value);
+        conditionalRenders(path);
+    };
+    const undo_action = () => { 
+        setDataFromHistoryPath(path, old_value);
+        conditionalRenders(path);
+    };
 
     //execution
     do_action();
@@ -43,8 +49,30 @@ function commitToHistory(action_name, undo_method, redo_method) {
         redo: redo_method
     });
     console.log(action_name);
-    //clear the redo stack
+    // showMessage(action_name);
+    //clear the redo stack if an edit is made.
     app.history.redo = [];
+    updateHistoryButtons();
+}
+
+/**
+ * Re-renders specific page elements based on the argument
+ * @param {string} path The path tht is edited.
+ * @returns {void}
+ */
+function conditionalRenders(path) {
+    if (path.startsWith("geography.") && /\.(name|background_color|icon|icon_color)$/.test(path)) renderHexes();
+    if (path.startsWith("factions.") && /\.(name|color|icon)$/.test(path)) renderHexes();
+    if (path.includes(".factions.") && path.endsWith(".faction_id")) refreshFactionBorderNeighbors(app.selected_hex);
+
+    //hex configuration
+    if (path.startsWith("hex_configuration.")) {
+        if (path.startsWith("hex_configuration.bg_")) {
+            renderBackground();
+            return;
+        }
+        renderHexes();
+    }
 }
 
 /**
@@ -69,9 +97,9 @@ function setDataFromHistoryPath(path, value) {
     const target = keys.reduce((object, key) => object[key], app.data);
     target[last_key] = value;
 
-    if (path.includes(".factions.") && path.endsWith(".faction_id")) {
-        refreshFactionBorderNeighbors(app.selected_hex);
-    }
+    // if (path.includes(".factions.") && path.endsWith(".faction_id")) {
+    //     refreshFactionBorderNeighbors(app.selected_hex);
+    // }
 }
 
 /**
@@ -83,6 +111,7 @@ function getFormValue(element) {
     if (element.type === "checkbox") return element.checked;
     if (element.type === "number") return Number(element.value);
     if (element.dataset.valueType === "number") return element.value === "" ? null : Number(element.value);
+    if (element.type === "radio") return element.checked ? element.value : null;
     return element.value;
 }
 
@@ -525,7 +554,7 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
                         data-object="roll_tables"
                         data-key="${roll_table_id}"
                         data-property="name"
-                        onblur="saveFormChanges(this)"
+                        data-history-path="roll_tables.${roll_table_id}.name"
                         ${read}
                     >`;
     if (!read_only) html += `
@@ -546,7 +575,7 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
                         data-object="roll_tables"
                         data-key="${roll_table_id}"
                         data-path="rows.${row}.0"
-                        onblur="saveFormChanges(this)"
+                        data-history-path="roll_tables.${roll_table_id}.rows.${row}.0"
                         ${read}
                     >
                 </td>
@@ -557,7 +586,7 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
                         data-object="roll_tables"
                         data-key="${roll_table_id}"
                         data-path="rows.${row}.1"
-                        onblur="saveFormChanges(this)"
+                        data-history-path="roll_tables.${roll_table_id}.rows.${row}.1"
                         ${read}
                     >
                 </td>

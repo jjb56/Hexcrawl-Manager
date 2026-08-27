@@ -40,10 +40,26 @@ function addTerrainType() {
 function deleteTerrainType(terrain_id) {
     //set data
     const terrain_data = structuredClone(app.data.geography[terrain_id]);
+    const roll_tables = {};
+    for (const roll_table_id of terrain_data.roll_table_ids) {
+        if (app.data.roll_tables[roll_table_id] !== undefined) {
+            roll_tables[roll_table_id] = structuredClone(app.data.roll_tables[roll_table_id]);
+        }
+    }
 
     //create actions
-    const do_action = () => delete app.data.geography[terrain_id];
-    const undo_action = () => app.data.geography[terrain_id] = structuredClone(terrain_data);
+    const do_action = () => {
+        delete app.data.geography[terrain_id];
+        for (const roll_table_id of terrain_data.roll_table_ids) {
+            delete app.data.roll_tables[roll_table_id];
+        }
+    };
+    const undo_action = () => {
+        app.data.geography[terrain_id] = structuredClone(terrain_data);
+        for (const roll_table_id in roll_tables) {
+            app.data.roll_tables[roll_table_id] = structuredClone(roll_tables[roll_table_id]);
+        }
+    };
 
     //execute actions
     do_action();

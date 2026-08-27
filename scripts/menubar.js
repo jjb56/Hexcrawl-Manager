@@ -32,12 +32,31 @@ function saveMapAs() {
 
 // Edit - Undo
 function undo() {
-    //undo the last action in the history stack
+    const action = app.history.undo.pop();
+    if (!action) return false;
+
+    action.undo();
+    app.history.redo.push(action);
+    renderCurrentTool();
+    updateHistoryButtons();
+    return true;
 }
 
 // Edit - Redo
 function redo() {
-    //redo the last action in the history stack
+    const action = app.history.redo.pop();
+    if (!action) return false;
+
+    action.redo();
+    app.history.undo.push(action);
+    renderCurrentTool();
+    updateHistoryButtons();
+    return true;
+}
+
+function updateHistoryButtons() {
+    document.querySelector("#button-edit-undo").disabled = app.history.undo.length === 0;
+    document.querySelector("#button-edit-redo").disabled = app.history.redo.length === 0;
 }
 
 // Edit - Cut
@@ -58,21 +77,33 @@ function paste() {
 
 // View - Zoom In
 function zoomIn() {
-    //zoom in the map
+    zoomMapIn();
 }
 
 // View - Zoom Out
 function zoomOut() {
-    //zoom out the map
+    zoomMapOut();
 }
 // View - Zoom Reset
 function zoomReset() {
-    //reset the zoom level of the map
+    resetMapZoom();
 }
+
+document.querySelector("#button-view-zoom-in").addEventListener("click", zoomIn);
+document.querySelector("#button-view-zoom-out").addEventListener("click", zoomOut);
+document.querySelector("#button-view-zoom-reset").addEventListener("click", zoomReset);
+document.querySelector("#button-edit-undo").addEventListener("click", undo);
+document.querySelector("#button-edit-redo").addEventListener("click", redo);
+updateHistoryButtons();
 
 //Tools - Terrain Paint
 document.querySelector("#button-tools-terrain-paint").addEventListener("click", () => {
     activateTool("TERRAIN_PAINT");
+});
+
+// Tools - Faction Paint
+document.querySelector("#button-tools-faction-paint").addEventListener("click", () => {
+	activateTool("FACTION_PAINT");
 });
 
 // Tools - Geography

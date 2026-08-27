@@ -13,6 +13,7 @@ const tools = Object.freeze({
     FACTIONS: "FACTIONS",
     HEX_CONFIGURATION: "HEX_CONFIGURATION",
     TERRAIN_PAINT: "TERRAIN_PAINT",
+	FACTION_PAINT: "FACTION_PAINT",
     HEX_EDIT: "HEX_EDIT"
 });
 
@@ -21,8 +22,11 @@ let app = {
 	selected_hex: null, //string coordinates
 	hovered_hex: null, //string coordinates
 	terrain_painting: null, //id of geography
+	faction_painting: null, //id of faction
+	faction_paint_amount: 100,
 	is_painting: false, //whether hovered hex will auto change to the new hex type. altered by paintTerrain();
 	terrain_painting_affected: [],
+	faction_painting_affected: [],
     menu: {
         is_active: false,
         selected: null
@@ -36,6 +40,11 @@ let app = {
         name: "Untitled.json",
         hasUnsavedChanges: false
     },
+	shape_sizes: {
+		pointy_top: [87, 100],
+		flat_top: [100, 87],
+		square: [95, 95]
+	},
     data: { //reset before use: next_id to 0, empty map, geography, roll_tables, and factions
         next_id: 6,
 		party_hex: null,
@@ -130,20 +139,22 @@ let app = {
 
 			shape: "pointy-top",
 
-			cell_width: 87,
+			cell_width: 100,
 			cell_height: 100,
 
 			bg_image: "",
-			bg_stretch_x: 1.0,
-			bg_stretch_y: 1.0,
+			bg_stretch_x: 100,
+			bg_stretch_y: 100,
 			bg_offset_x: 0,
 			bg_offset_y: 0,
-			bg_alpha: 1.0,
+			bg_alpha: 100,
 
 			show_coordinates: true,
-			icon_alpha: 1.0,
-			faction_border_width: 15,
-			faction_border_alpha: 1.0,
+			show_empty_cell_background: true,
+			show_geography_background_colors: true,
+			icon_alpha: 100,
+			faction_border_width: 7,
+			faction_border_alpha: 100,
 			border_width: 1
         }
     }
@@ -153,6 +164,12 @@ let app = {
 //              Tool open/close
 //========================================================================================================================================
 function activateTool(tool) {
+	const previous_tool = app.current_tool;
+	if (previous_tool !== tool && (previous_tool === tools.FACTION_PAINT || tool === tools.FACTION_PAINT ||
+		previous_tool === tools.TERRAIN_PAINT || tool === tools.TERRAIN_PAINT)) {
+		app.faction_painting = null;
+		app.terrain_painting = null;
+	}
 	app.current_tool = tool;
 	const hide_var = "hide";
 	
@@ -165,35 +182,44 @@ function activateTool(tool) {
 		case "GEOGRAPHY":
 			document.getElementById("properties-geography")?.classList.remove(hide_var);
 			renderCurrentTool();
-			return;
+			break;
 
 		case "FACTIONS":
 			document.getElementById("properties-factions")?.classList.remove(hide_var);
 			renderCurrentTool();
-			return;
+			break;
 
 		case "HEX_CONFIGURATION":
 			document.getElementById("properties-hex-configuration")?.classList.remove(hide_var);
-			return;
+			renderCurrentTool();
+			break;
 
 		case "TERRAIN_PAINT":
 			document.getElementById("properties-terrain-paint")?.classList.remove(hide_var);
 			renderCurrentTool();
-			return;
+			break;
+
+		case "FACTION_PAINT":
+			document.getElementById("properties-faction-paint")?.classList.remove(hide_var);
+			renderCurrentTool();
+			break;
 
 		case "HEX_EDIT":
 			document.getElementById("properties-hex-edit")?.classList.remove(hide_var);
 			renderCurrentTool();
-			return;
+			break;
 
 		case "NONE":
 		default:
 			document.getElementById("properties-none")?.classList.remove(hide_var);
-			return;
+			app.selected_hex = null;
+        	renderHexSelection(null)
 	}
-}
 
-activateTool("NONE");
+	document.querySelectorAll(".exit-tool-button").forEach(button => {
+		button.addEventListener("click", () => activateTool(tools.NONE));
+	})
+}
 
 // close tool buttons
 document.querySelectorAll(".exit-tool-button").forEach(button => {
@@ -201,6 +227,8 @@ document.querySelectorAll(".exit-tool-button").forEach(button => {
         activateTool("NONE");
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => activateTool(tools.NONE));
 
 // timer
 function resetTimer(timer) {
@@ -225,6 +253,14 @@ function renderCurrentTool() {
 
 		case tools.TERRAIN_PAINT:
 			renderTerrainPaintList();
+			break;
+
+		case tools.FACTION_PAINT:
+			renderFactionPaintList();
+			break;
+
+		case tools.HEX_CONFIGURATION:
+			renderHexConfiguration();
 			break;
 
 		default:

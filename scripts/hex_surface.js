@@ -6,32 +6,23 @@
 //              Main Functions
 //========================================================================================================================================
 
-//this file contains information related to the hex grid and its rendering.
-//if a hex is clicked, we use open the hex edit tool. if an empty space is clicked (outside the map), we close all tools.
-//the scroll wheel will be useed to scroll down in the map surface, or if shift is held, horizontally
-//we will override browser ctrl+/- functionality to zoom in and out, as well as ctrl+scroll. with ctrl+scroll, we will scroll in on the hovered cell.
-//the user cannot scroll too far outside the determined size of the hex grid
-//each hex will display based on the selections in the hex configuration tool.
-//the div holding the render area will act like a viewport to the map, never spilling out to other web elements
-
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
-/* format of data in app.data.map = {
-    "4,5": {
-        geography_id: 0,
-        description: "",
-        factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
-            {faction_id:1,presence:400},
-            {faction_id:4, presence:300}
-        ], 
-        landmarks: ["", ""], //optional, not drawn on hex
-        roll_tables: [4], //optional, but always displays the geography and faction-related tables below the hex tables
-    }
-} */
+
+let map_camera;
 
 function renderHexes() {
     const config = app.data.hex_configuration;
+
+    // Remove cells from the previous render that are outside the current map bounds.
+    document.querySelectorAll(".hex").forEach(hex => {
+        const [x, y] = (hex.dataset.hexKey || "").split(",").map(Number);
+        if (!Number.isInteger(x) || !Number.isInteger(y) ||
+            x < 0 || x >= config.map_width || y < 0 || y >= config.map_height) {
+            hex.remove();
+        }
+    });
 
     for (let y = 0; y < config.map_height; y++) {
         for (let x = 0; x < config.map_width; x++) {
@@ -44,8 +35,238 @@ function renderHexes() {
             renderHexCoordinates(hex_key);
         }
     }
+
+    if (app.selected_hex !== null) renderHexSelection(app.selected_hex);
+    updateMapSurfaceSize();
+    if (map_camera) applyMapCamera();
 }
 renderHexes();
+
+map_camera = {
+    scale: 1,
+    x: 0,
+    y: 0,
+    min_scale: 0.25,
+    max_scale: 4,
+    zoom_focus_x: null,
+    zoom_focus_y: null,
+    is_panning: false,
+    pointer_id: null,
+    start_pointer_x: 0,
+    start_pointer_y: 0,
+    start_camera_x: 0,
+    start_camera_y: 0
+};
+
+function getMapSurface() {
+    return document.getElementById("hex-map-surface");
+}
+
+function getMapBounds() {
+    const config = app.data.hex_configuration;
+    const dimensions = getHexDimensions(config);
+    let width;
+    let height;
+
+    switch (config.shape) {
+        case "pointy-top":
+            width = (config.map_width - 1) * dimensions.width + dimensions.width +
+                (config.map_height > 1 ? dimensions.width / 2 : 0);
+            height = (config.map_height - 1) * dimensions.height * 0.75 + dimensions.height;
+            break;
+        case "flat-top":
+            width = (config.map_width - 1) * dimensions.width * 0.75 + dimensions.width;
+            height = (config.map_height - 1) * dimensions.height + dimensions.height +
+                (config.map_width > 1 ? dimensions.height / 2 : 0);
+            break;
+        case "square":
+        default:
+            width = config.map_width * dimensions.width;
+            height = config.map_height * dimensions.height;
+            break;
+    }
+
+    return { width: Math.max(0, width), height: Math.max(0, height) };
+}
+
+function updateMapSurfaceSize() {
+    const surface = getMapSurface();
+    if (!surface) return;
+
+    const bounds = getMapBounds();
+    surface.style.width = `${bounds.width}px`;
+    surface.style.height = `${bounds.height}px`;
+}
+
+function getCameraLimits() {
+    const map_area = document.getElementById("map-area");
+    const bounds = getMapBounds();
+    const scaled_width = bounds.width * map_camera.scale;
+    const scaled_height = bounds.height * map_camera.scale;
+    const half_viewport_width = map_area.clientWidth / 2;
+    const half_viewport_height = map_area.clientHeight / 2;
+
+    return {
+        min_x: half_viewport_width - scaled_width,
+        max_x: half_viewport_width,
+        min_y: half_viewport_height - scaled_height,
+        max_y: half_viewport_height
+    };
+}
+
+function clampMapCamera() {
+    const limits = getCameraLimits();
+    map_camera.x = Math.min(limits.max_x, Math.max(limits.min_x, map_camera.x));
+    map_camera.y = Math.min(limits.max_y, Math.max(limits.min_y, map_camera.y));
+}
+
+function applyMapCamera() {
+    const surface = getMapSurface();
+    if (!surface) return;
+
+    clampMapCamera();
+    surface.style.transform = `translate(${map_camera.x}px, ${map_camera.y}px) scale(${map_camera.scale})`;
+}
+
+function setMapZoom(next_scale, focus_x = null, focus_y = null) {
+    const map_area = document.getElementById("map-area");
+    const surface = getMapSurface();
+    if (!map_area || !surface) return;
+
+    const scale = Math.min(map_camera.max_scale, Math.max(map_camera.min_scale, next_scale));
+    if (scale === map_camera.scale) return;
+
+    if (focus_x !== null && focus_y !== null) {
+        const surface_x = (focus_x - map_camera.x) / map_camera.scale;
+        const surface_y = (focus_y - map_camera.y) / map_camera.scale;
+        map_camera.scale = scale;
+        map_camera.x = focus_x - surface_x * scale;
+        map_camera.y = focus_y - surface_y * scale;
+    } else {
+        map_camera.scale = scale;
+    }
+
+    applyMapCamera();
+}
+
+function zoomMapIn() {
+    setMapZoom(map_camera.scale * 1.2, ...getMapZoomFocus());
+}
+
+function zoomMapOut() {
+    setMapZoom(map_camera.scale / 1.2, ...getMapZoomFocus());
+}
+
+function getMapZoomFocus() {
+    const map_area = document.getElementById("map-area");
+    return [
+        map_camera.zoom_focus_x ?? map_area.clientWidth / 2,
+        map_camera.zoom_focus_y ?? map_area.clientHeight / 2
+    ];
+}
+
+function resetMapZoom() {
+    map_camera.scale = 1;
+    map_camera.x = 0;
+    map_camera.y = 0;
+    applyMapCamera();
+}
+
+function isFormElementActive() {
+    const active_element = document.activeElement;
+    return active_element?.matches("input, textarea, select, button, [contenteditable=\"true\"]") ?? false;
+}
+
+document.addEventListener("keydown", event => {
+    if (event.isComposing || isFormElementActive()) return;
+
+    const command_key = event.ctrlKey || event.metaKey;
+    if (command_key && event.key.toLowerCase() === "z") {
+        const handled = event.shiftKey ? redo() : undo();
+        if (handled) event.preventDefault();
+        return;
+    }
+    if (command_key && event.key.toLowerCase() === "y") {
+        if (redo()) event.preventDefault();
+        return;
+    }
+
+    switch (event.key) {
+        case "=":
+            zoomMapIn();
+            event.preventDefault();
+            break;
+        case "-":
+            zoomMapOut();
+            event.preventDefault();
+            break;
+        case "0":
+            resetMapZoom();
+            event.preventDefault();
+            break;
+        default:
+            break;
+    }
+});
+
+function setupMapCamera() {
+    const map_area = document.getElementById("map-area");
+    if (!map_area) return;
+
+    map_area.addEventListener("contextmenu", event => event.preventDefault());
+    map_area.addEventListener("click", event => {
+        if (event.target.closest(".hex")) return;
+        if (app.current_tool === tools.TERRAIN_PAINT || app.current_tool === tools.FACTION_PAINT) return;
+        activateTool(tools.NONE);
+    });
+    map_area.addEventListener("wheel", event => {
+        event.preventDefault();
+        const rectangle = map_area.getBoundingClientRect();
+        const focus_x = event.clientX - rectangle.left;
+        const focus_y = event.clientY - rectangle.top;
+        map_camera.zoom_focus_x = focus_x;
+        map_camera.zoom_focus_y = focus_y;
+        setMapZoom(map_camera.scale * (event.deltaY < 0 ? 1.1 : 1 / 1.1), focus_x, focus_y);
+    }, { passive: false });
+
+    map_area.addEventListener("pointerdown", event => {
+        if (event.button !== 2) return;
+        map_camera.is_panning = true;
+        map_camera.pointer_id = event.pointerId;
+        map_camera.start_pointer_x = event.clientX;
+        map_camera.start_pointer_y = event.clientY;
+        map_camera.start_camera_x = map_camera.x;
+        map_camera.start_camera_y = map_camera.y;
+        map_area.setPointerCapture(event.pointerId);
+        map_area.classList.add("map-panning");
+        event.preventDefault();
+    });
+
+    map_area.addEventListener("pointermove", event => {
+        const rectangle = map_area.getBoundingClientRect();
+        map_camera.zoom_focus_x = event.clientX - rectangle.left;
+        map_camera.zoom_focus_y = event.clientY - rectangle.top;
+        if (!map_camera.is_panning || event.pointerId !== map_camera.pointer_id) return;
+        map_camera.x = map_camera.start_camera_x + event.clientX - map_camera.start_pointer_x;
+        map_camera.y = map_camera.start_camera_y + event.clientY - map_camera.start_pointer_y;
+        applyMapCamera();
+    });
+
+    const end_pan = event => {
+        if (!map_camera.is_panning || event.pointerId !== map_camera.pointer_id) return;
+        map_camera.is_panning = false;
+        map_camera.pointer_id = null;
+        map_area.classList.remove("map-panning");
+        if (map_area.hasPointerCapture(event.pointerId)) map_area.releasePointerCapture(event.pointerId);
+    };
+    map_area.addEventListener("pointerup", end_pan);
+    map_area.addEventListener("pointercancel", end_pan);
+    window.addEventListener("resize", applyMapCamera);
+}
+
+setupMapCamera();
+updateMapSurfaceSize();
+applyMapCamera();
 
 /**
  * Updates the hover state of a single hex.
@@ -77,7 +298,7 @@ function renderHexHover(hex_key) {
  * @returns {void}
  */
 function selectHex(hex_key) {
-    if (app.current_tool === tools.TERRAIN_PAINT || app.is_painting) return;
+    if (app.current_tool === tools.TERRAIN_PAINT || app.current_tool === tools.FACTION_PAINT || app.is_painting) return;
 
     app.selected_hex = hex_key;
     renderHexSelection(hex_key);
@@ -104,42 +325,43 @@ function renderHexSelection(hex_key) {
     hex.classList.add("hex-selected");
 
     const config = app.data.hex_configuration;
+    const dimensions = getHexDimensions(config);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add("hex-selection-border");
-    svg.setAttribute("viewBox", `0 0 ${config.cell_width} ${config.cell_height}`);
-    svg.setAttribute("width", config.cell_width);
-    svg.setAttribute("height", config.cell_height);
+    svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+    svg.setAttribute("width", dimensions.width);
+    svg.setAttribute("height", dimensions.height);
 
     let points;
     switch (config.shape) {
         case "pointy-top":
             points = [
-                [config.cell_width / 2, 0],
-                [config.cell_width, config.cell_height * 0.25],
-                [config.cell_width, config.cell_height * 0.75],
-                [config.cell_width / 2, config.cell_height],
-                [0, config.cell_height * 0.75],
-                [0, config.cell_height * 0.25]
+                [dimensions.width / 2, 0],
+                [dimensions.width, dimensions.height * 0.25],
+                [dimensions.width, dimensions.height * 0.75],
+                [dimensions.width / 2, dimensions.height],
+                [0, dimensions.height * 0.75],
+                [0, dimensions.height * 0.25]
             ];
             break;
 
         case "flat-top":
             points = [
-                [config.cell_width * 0.25, 0],
-                [config.cell_width * 0.75, 0],
-                [config.cell_width, config.cell_height / 2],
-                [config.cell_width * 0.75, config.cell_height],
-                [config.cell_width * 0.25, config.cell_height],
-                [0, config.cell_height / 2]
+                [dimensions.width * 0.25, 0],
+                [dimensions.width * 0.75, 0],
+                [dimensions.width, dimensions.height / 2],
+                [dimensions.width * 0.75, dimensions.height],
+                [dimensions.width * 0.25, dimensions.height],
+                [0, dimensions.height / 2]
             ];
             break;
 
         case "square":
             points = [
                 [0, 0],
-                [config.cell_width, 0],
-                [config.cell_width, config.cell_height],
-                [0, config.cell_height]
+                [dimensions.width, 0],
+                [dimensions.width, dimensions.height],
+                [0, dimensions.height]
             ];
             break;
 
@@ -166,19 +388,21 @@ function renderHexSelection(hex_key) {
 function renderHexTerrain(hex_key) {
     const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
     const hex_data = app.data.map[hex_key];
+    const show_empty_cell_background = app.data.hex_configuration.show_empty_cell_background !== false;
+    const show_geography_background_colors = app.data.hex_configuration.show_geography_background_colors !== false;
 
     if (!hex_data || hex_data.geography_id === undefined) {
-        hex.style.backgroundColor = "";
+        hex.style.backgroundColor = show_empty_cell_background && show_geography_background_colors ? "gray" : "transparent";
         return;
     }
 
     const geography = app.data.geography[hex_data.geography_id];
 
     if (!geography) {
-        hex.style.backgroundColor = "";
+        hex.style.backgroundColor = show_empty_cell_background ? "gray" : "transparent";
         return;
     }
-    hex.style.backgroundColor = geography.background_color;
+    hex.style.backgroundColor = show_geography_background_colors ? geography.background_color : "transparent";
 }
 
 /**
@@ -313,6 +537,7 @@ function renderFactionBorders(hex_key) {
     if (!hex) return;
 
     let border_surface = hex.querySelector(".hex-faction-borders");
+    const dimensions = getHexDimensions(config);
 
     // NO FACTION DATA
     if (!hex_data || !hex_data.factions || hex_data.factions.length === 0 || config.faction_border_width <= 0) {
@@ -326,9 +551,9 @@ function renderFactionBorders(hex_key) {
         border_surface.classList.add("hex-faction-borders");
         hex.appendChild(border_surface);
     }
-    border_surface.setAttribute("viewBox", `0 0 ${config.cell_width} ${config.cell_height}`);
-    border_surface.setAttribute("width", config.cell_width);
-    border_surface.setAttribute("height", config.cell_height);
+    border_surface.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+    border_surface.setAttribute("width", dimensions.width);
+    border_surface.setAttribute("height", dimensions.height);
     border_surface.replaceChildren(); // Remove anything rendered during the previous pass.
 
     // SORT FACTIONS
@@ -348,12 +573,12 @@ function renderFactionBorders(hex_key) {
 
     if (config.shape === "pointy-top") { // POINTY-TOP
         const points = [
-            [config.cell_width / 2, 0],                      // 0
-            [config.cell_width, config.cell_height * 0.25], // 1
-            [config.cell_width, config.cell_height * 0.75], // 2
-            [config.cell_width / 2, config.cell_height],    // 3
-            [0, config.cell_height * 0.75],                 // 4
-            [0, config.cell_height * 0.25]                   // 5
+            [dimensions.width / 2, 0],                      // 0
+            [dimensions.width, dimensions.height * 0.25], // 1
+            [dimensions.width, dimensions.height * 0.75], // 2
+            [dimensions.width / 2, dimensions.height],    // 3
+            [0, dimensions.height * 0.75],                 // 4
+            [0, dimensions.height * 0.25]                   // 5
         ];
         edges = [
             [points[0], points[1]], // 0 upper-right
@@ -387,12 +612,12 @@ function renderFactionBorders(hex_key) {
 
     } else if (config.shape === "flat-top") { // FLAT-TOP
         const points = [
-            [config.cell_width * 0.25, 0],                    // 0
-            [config.cell_width * 0.75, 0],                    // 1
-            [config.cell_width, config.cell_height / 2],      // 2
-            [config.cell_width * 0.75, config.cell_height],   // 3
-            [config.cell_width * 0.25, config.cell_height],   // 4
-            [0, config.cell_height / 2]                       // 5
+            [dimensions.width * 0.25, 0],                    // 0
+            [dimensions.width * 0.75, 0],                    // 1
+            [dimensions.width, dimensions.height / 2],      // 2
+            [dimensions.width * 0.75, dimensions.height],   // 3
+            [dimensions.width * 0.25, dimensions.height],   // 4
+            [0, dimensions.height / 2]                       // 5
         ];
         edges = [
             [points[0], points[1]], // 0 top
@@ -427,9 +652,9 @@ function renderFactionBorders(hex_key) {
     } else if (config.shape === "square") { // SQUARE
         const points = [
             [0, 0],
-            [config.cell_width, 0],
-            [config.cell_width, config.cell_height],
-            [0, config.cell_height]
+            [dimensions.width, 0],
+            [dimensions.width, dimensions.height],
+            [0, dimensions.height]
         ];
         edges = [
             [points[0], points[1]], // 0 top
@@ -472,11 +697,15 @@ function renderFactionBorders(hex_key) {
         if (!faction_info) continue;
         if (faction.presence <= 0) continue;
         const width_ratio = faction.presence / strongest_presence;
-        const border_width = config.faction_border_width * width_ratio;
+        const border_width = 2 * config.faction_border_width * width_ratio;
 
         // Check every possible edge.
         for (let edge_index = 0; edge_index < edges.length; edge_index++) {
-            const neighbor_data = app.data.map[neighbors[edge_index]];
+            const neighbor_key = neighbors[edge_index];
+            const [neighbor_x, neighbor_y] = neighbor_key.split(",").map(Number);
+            const neighbor_is_in_bounds = neighbor_x >= 0 && neighbor_x < config.map_width &&
+                neighbor_y >= 0 && neighbor_y < config.map_height;
+            const neighbor_data = neighbor_is_in_bounds ? app.data.map[neighbor_key] : null;
             const faction_present = neighbor_data?.factions?.some(neighbor_faction => neighbor_faction.faction_id === faction.faction_id) ?? false;
             if (faction_present) continue;
 
@@ -518,6 +747,7 @@ function renderFactionBorders(hex_key) {
 function renderHexOutlines(hex_key) {
     const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
     const config = app.data.hex_configuration;
+    const dimensions = getHexDimensions(config);
     let outline = hex.querySelector(".hex-outline");
 
     if (config.border_width <= 0) {
@@ -540,16 +770,16 @@ function renderHexOutlines(hex_key) {
     }
 
     const polygon = outline.querySelector(".hex-outline-polygon");
-    outline.setAttribute("viewBox", `0 0 ${config.cell_width} ${config.cell_height}`);
-    outline.setAttribute("width", config.cell_width);
-    outline.setAttribute("height", config.cell_height);
+    outline.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+    outline.setAttribute("width", dimensions.width);
+    outline.setAttribute("height", dimensions.height);
 
     polygon.setAttribute(
         "points",
         getHexPolygonPoints(
             config.shape,
-            config.cell_width,
-            config.cell_height
+            dimensions.width,
+            dimensions.height
         )
     );
 
@@ -567,6 +797,7 @@ function renderHexOutlines(hex_key) {
  */
 function renderHex(hex_key) {
     const config = app.data.hex_configuration;
+    const dimensions = getHexDimensions(config);
     const [x, y] = getHexXY(hex_key);
     let hex = document.getElementById(`hex-${hex_key.replace(",", "-")}`);
 
@@ -575,20 +806,28 @@ function renderHex(hex_key) {
         hex.id = `hex-${hex_key.replace(",", "-")}`;
         hex.classList.add("hex");
         hex.dataset.hexKey = hex_key;
-        hex.addEventListener("click", () => { if (!app.is_painting) selectHex(hex_key); });
+        hex.addEventListener("click", () => {
+            if (!app.is_painting && app.current_tool !== tools.TERRAIN_PAINT && app.current_tool !== tools.FACTION_PAINT) {
+                selectHex(hex_key);
+            }
+        });
         hex.addEventListener("mouseenter", () => { 
             renderHexHover(hex_key);
-            if (app.is_painting) paintTerrain(hex_key);
+            if (app.is_painting && app.current_tool === tools.TERRAIN_PAINT) paintTerrain(hex_key);
+            if (app.is_painting && app.current_tool === tools.FACTION_PAINT) paintFaction(hex_key);
         });
         hex.addEventListener("mouseleave", () => { renderHexHover(null); });
-        hex.addEventListener("mousedown", () => { if (app.current_tool === tools.TERRAIN_PAINT) paintTerrain(hex_key); });
+        hex.addEventListener("mousedown", () => {
+            if (app.current_tool === tools.TERRAIN_PAINT) paintTerrain(hex_key);
+            if (app.current_tool === tools.FACTION_PAINT) paintFaction(hex_key);
+        });
         document.getElementById("hex-map-surface").appendChild(hex);
     }
 
     hex.style.left = `${x}px`;
     hex.style.top = `${y}px`;
-    hex.style.width = `${config.cell_width}px`;
-    hex.style.height = `${config.cell_height}px`;
+    hex.style.width = `${dimensions.width}px`;
+    hex.style.height = `${dimensions.height}px`;
 
     hex.classList.remove("hex-pointy-top", "hex-flat-top", "hex-square");
     hex.classList.add(`hex-${config.shape}`);
@@ -598,13 +837,16 @@ function renderHex(hex_key) {
 //              Helper Functions
 //========================================================================================================================================
 
-/**
- * 
- * @param {*} hex_key 
- * @returns {Array} an array or arrays of x, y coordinates
- */
-function getHexVertices(hex_key) {
+function getHexDimensions(config) {
+    const shape_key = config.shape.replace("-", "_");
+    const default_dimensions = app.shape_sizes[shape_key];
+    const width_percentage = Number(config.cell_width);
+    const height_percentage = Number(config.cell_height);
 
+    return {
+        width: default_dimensions[0] * width_percentage / 100,
+        height: default_dimensions[1] * height_percentage / 100
+    };
 }
 
 function getHexPolygonPoints(shape, width, height) {
@@ -652,20 +894,21 @@ function getHexXY(hex_key) {
     const x = Number(xString);
     const y = Number(yString);
     const config = app.data.hex_configuration;
+    const dimensions = getHexDimensions(config);
 
     switch (config.shape) {
         case "pointy-top": {
-            const oddRowOffset = (y % 2 === 1) ? config.cell_width / 2 : 0;
-            return [x * config.cell_width + oddRowOffset, y * (config.cell_height * 0.75)];
+            const oddRowOffset = (y % 2 === 1) ? dimensions.width / 2 : 0;
+            return [x * dimensions.width + oddRowOffset, y * (dimensions.height * 0.75)];
         }
 
         case "flat-top": {
-            const oddColumnOffset = (x % 2 === 1) ? config.cell_height / 2 : 0;
-            return [x * (config.cell_width * 0.75), y * config.cell_height + oddColumnOffset];
+            const oddColumnOffset = (x % 2 === 1) ? dimensions.height / 2 : 0;
+            return [x * (dimensions.width * 0.75), y * dimensions.height + oddColumnOffset];
         }
 
         case "square":
-            return [x * config.cell_width, y * config.cell_height];
+            return [x * dimensions.width, y * dimensions.height];
 
         default:
             return [x, y];

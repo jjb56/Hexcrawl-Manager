@@ -9,7 +9,7 @@
 <body>
     <header>
         <div id="logobar">
-            <div id="logo">Debreut's Hexcrawl Manager</div>
+            <div id="logo">Debreut's Hexcrawl Manager (alpha)</div>
             <div id="file-name"></div>
             <div id="other-buttons"><!-- Buttons: Connect Google Drive, Donate, toggle light/dark mode --></div>
         </div>
@@ -30,18 +30,18 @@
                     <div class="dropdown-menu" id="edit-dropdown">
                         <button id="button-edit-undo" type="button" disabled>Undo</button>
                         <button id="button-edit-redo" type="button" disabled>Redo</button>
-                        <button id="button-edit-cut" type="button" disabled>Cut</button>
+                        <!-- <button id="button-edit-cut" type="button" disabled>Cut</button>
                         <button id="button-edit-copy" type="button" disabled>Copy</button>
-                        <button id="button-edit-paste" type="button" disabled>Paste</button>
+                        <button id="button-edit-paste" type="button" disabled>Paste</button> -->
                     </div>
                 </div>
                 <div class="divider">|</div>
                 <div class="menu-item" id="view-menu">
                     <button class="menu-button" type="button">View</button>
                     <div class="dropdown-menu" id="view-dropdown">
-                        <button id="button-view-zoom-in" type="button" disabled>Zoom In</button>
-                        <button id="button-view-zoom-out" type="button" disabled>Zoom Out</button>
-                        <button id="button-view-zoom-reset" type="button" disabled>Zoom Reset</button>
+                        <button id="button-view-zoom-in" type="button">Zoom In</button>
+                        <button id="button-view-zoom-out" type="button">Zoom Out</button>
+                        <button id="button-view-zoom-reset" type="button">Zoom Reset</button>
                     </div>
                 </div>
                 <div class="divider">|</div>
@@ -49,6 +49,7 @@
                     <button class="menu-button" type="button">Tools</button>
                     <div class="dropdown-menu" id="tools-dropdown">
                         <button id="button-tools-terrain-paint" type="button">Terrain Paint</button>
+                        <button id="button-tools-faction-paint" type="button">Faction Paint</button>
                         <button id="button-tools-geography" type="button">Geography</button>
                         <button id="button-tools-factions" type="button">Factions</button>
                         <button id="button-tools-hex-configuration" type="button">Hex Config</button>
@@ -61,7 +62,7 @@
                     <div class="dropdown-menu" id="help-dropdown">
                         <button id="button-help-manual" type="button" disabled>Manual</button>
                         <button id="button-help-about" type="button" disabled>About</button>
-                        <button id="button-help-version" type="button" disabled>Version 0.0.1</button>
+                        <button id="button-help-version" type="button" disabled>Version 0.7.0</button>
                     </div>
                 </div>
             </div>
@@ -72,22 +73,15 @@
     <main>
         <section id="map-area">
             <div id="hex-map-surface"></div>
-            <!--
-                The map renderer will eventually
-                populate this container.
-
-                TODO:
-                - Hex grid renderer
-                - Map camera
-                - Hex selection
-                - Map visuals
-            -->
         </section>
 
         <aside id="properties-window">
             <!-- ===== State: NONE ===== -->
             <div id="properties-none" class="tool-area" data-state="NONE">
-                <p><i>Select a hex or tool to display its properties here.</i></p>
+                <div class="tool-header">
+                    <h2>Nothing Selected</h2>
+                    <p class="tool-description">Select a hex or tool to display its properties here.</p>
+                </div>
             </div>
 
             <!-- ===== State: EDIT_HEX ===== -->
@@ -99,70 +93,15 @@
                 </div>
                 <hr>
                 <div id="hex-edit-content">
-                    
+                    <p><i>No region selected to display</i></p>
                 </div>
-                <!-- <hr>
-                <div class="tool-content">
-                    <div class="hex-city">
-                        <h3>City</h3>
-                        <textarea id="hex-city" placeholder="Enter city info."></textarea>
-                    </div>
-                    <hr>
-                    <div class="hex-landmark">
-                        <h3>Landmark</h3>
-                        <textarea id="hex-landmark" placeholder="Enter landmark info."></textarea>
-                    </div>
-                    <hr>
-                    <div class="tool-roll-tables">
-                        <h3>Roll Tables</h3>
-                        <div id="terrain-roll-tables">
-                            <span id="roll-table-title">Table 1</span>
-                            <table>
-                                <tr><th><input type="text"></th><th><input type="text"></th><td></td></tr>
-                                <tr><th><input type="text"></th><td><input type="text"></td><td>del</td></tr>
-                                <tr><td><button id="roll-table-add-row" class="good-button"> + </button></td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="hex-faction">
-                        <h3>Faction</h3>
-                        <div id="hex-faction-list">
-                            <select id="hex-faction-select">
-                                <option value="">-- No Faction --</option>
-                            </select>
-                            <input type="number" id="hex-faction-presence" min="0" placeholder="presence">
-                            <button id="button-hex-faction-delete" class="bad-button"> - </button>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="hex-notes">
-                        <h3>Notes</h3>
-                        <textarea id="hex-notes" placeholder="Enter notes for this region..."></textarea>
-                    </div>
-                </div>
-                <hr>
-                <div id="add-property-region">
-                    <select id="hex-select-property">
-                        <option>City</option>
-                        <option>Landmark</option>
-                        <option>Notes</option>
-                        <option>Faction</option>
-                    </select>
-                    <button id="hex-add-property" class="good-button">+ Add</button>
-                </div>
-                <hr>
-                <button class="exit-tool-button" type="button">Close Region Window</button> -->
             </div>
 
             <!-- ===== State: TERRAIN_PAINT ===== -->
             <div id="properties-terrain-paint" class="tool-area" data-state="TERRAIN_PAINT">
                 <div class="tool-header">
                     <h2>Terrain Paint</h2>
-                    <div id="terrain-paint-tabs">
-                        <button id="terrain-paint-biome-tab" class="terain-paint-tab" data-state="PAINT_TERRAIN">Biome</button>
-                        <button id="terrain-paint-line-tab" class="terrain-paint-tab" data-state="PAINT_LINE" disabled>Line</button>
-                    </div>
+                    <p class="tool-description">Choose a terrain to paint it.<br>Deselect all terrains to erase.</p>
                 </div>
                 <hr>
                 <div id="terrain-paint-list">
@@ -172,53 +111,30 @@
                 <button class="exit-tool-button" type="button">Close Paint Tool</button>
             </div>
 
+            <!-- ===== State: FACTION_PAINT ===== -->
+            <div id="properties-faction-paint" class="tool-area" data-state="FACTION_PAINT">
+                <div class="tool-header">
+                    <h2>Faction Paint</h2>
+                    <p class="tool-description">Choose a faction and presence to add to cells.</p>
+                </div>
+                <hr>
+                <label for="faction-paint-amount">Presence to paint</label>
+                <input id="faction-paint-amount" type="number" min="0" step="1" value="100">
+                <hr>
+                <div id="faction-paint-list"></div>
+                <hr>
+                <button class="exit-tool-button" type="button">Close Paint Tool</button>
+            </div>
+
             <!-- ===== State: HEX CONFIGURATION ===== -->
             <div id="properties-hex-configuration" class="tool-area" data-state="HEX_CONFIGURATION">
                 <div class="tool-header">
                     <h2>Hex Configuration</h2>
+                    <p class="tool-description">Change map settings.</p>
                 </div>
                 <hr>
-                <div class="tool-content">
-                    <div class="config-map-size">
-                        <h3>Map Size</h3>
-                        <input type="number" id="map-width" placeholder="10"><label for="map-width">Cells Wide</label>
-                        <input type="number" id="map-height" placeholder="10"><label for="map-height">Cells High</label>
-                    </div>
-                    <hr>
-                    <div id="config-hex-shape">
-                        <h3>Grid Cell Shape</h3>
-                        <input type="radio" id="hex-type-pointy-top" name="grid-cell-shape"><label for="hex-type-pointy-top">Pointy-Top Hex</label><br>
-                        <input type="radio" id="hex-type-flat-top" name="grid-cell-shape"><label for="hex-type-flat-top">Flat-Top Hex</label><br>
-                        <input type="radio" id="hex-type-square" name="grid-cell-shape"><label for="hex-type-square">Square</label><br>
-                    </div>
-                    <hr>
-                    <div id="config-grid-size">
-                        <h3>Grid Size</h3>
-                        <input type="number" id="grid-size-width" placeholder="100"><label for="grid-size-width">Cell Width</label>
-                        <input type="number" id="grid-size-height" placeholder="100"><label for="grid-size-height">Cell Height</label>
-                    </div>
-                    <hr>
-                    <div class="config-bg-image">
-                        <h3>Background Image</h3>
-                        <input type="url" id="bg-image-url" placeholder="URL">
-                        <span id="or-selection"><i>OR</i></span>
-                        <input type="file" id="bg-image-file">
-                        <input type="number" id="bg-xscale" min="0"><label for="bg-xscale">Stretch Width</label>
-                        <input type="number" id="bg-yscale" min="0"><label for="bg-yscale">Stretch Height</label>
-                        <input type="number" id="bg-xoffset"><label for="bg-xoffset">X Offset</label>
-                        <input type="number" id="bg-yoffset"><label for="bg-yoffset">Y Offset</label>
-                        <input type="number" id="bg-alpha" min="0"><label for="bg-alpha">Image Alpha</label>
-                    </div>
-                    <hr>
-                    <div id="config-show-features">
-                        <h3>Grid Display</h3>
-                        <input type="checkbox" id="show-coordinates"><label for="show-coordinates">Show Coordinates</label>
-                        <input type="number" id="show-icons" min="0" max="100"><label for="show-icons">Icon Alpha</label>
-                        <input type="number" id="border-size" min="0"><label for="border-size">Border Size</label>
-                        <input type="number" id="faction-border-size" min="0"><label for="faction-border-size">Faction Border Size</label>
-                        <input type="number" id="faction-border-alpha" min="0" max="100"><label for="faction-border-alpha">Faction Border Alpha</label>
-                    </div>
-                </div>
+                <div class="tool-content" id="hex-configuration-content"></div>
+                <hr>
                 <button class="exit-tool-button" type="button">Close Hex Configuration Window</button>
             </div>
 
@@ -226,6 +142,7 @@
             <div id="properties-factions" class="tool-area" data-state="FACTIONS">
                 <div class="tool-header">
                     <h2>Factions</h2>
+                    <p class="tool-description">Factions can be used to create zone borders.</p>
                 </div>
                 <hr>
                 <div class="tool-content">
@@ -243,6 +160,7 @@
             <div id="properties-geography" class="tool-area" data-state="GEOGRAPHY">
                 <div class="tool-header">
                     <h2>Geography</h2>
+                    <p class="tool-description">Create biomes for use in the Terrain Paint tool.</p>
                 </div>
                 <hr>
                 <div class="tool-content">
@@ -273,5 +191,7 @@
     <script src="scripts/tool_geography.js"></script>
     <script src="scripts/tool_factions.js"></script>
     <script src="scripts/tool_terrain_paint.js"></script>
+    <script src="scripts/tool_faction_paint.js"></script>
+    <script src="scripts/tool_hex_configuration.js"></script>
 </body>
 </html>

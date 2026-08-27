@@ -43,7 +43,7 @@ function paintTerrain(hex_key) {
  * @returns {void}
  */
 function endTerrainPaint() {
-    if (!app.is_painting) return;
+    if (!app.is_painting || app.current_tool !== tools.TERRAIN_PAINT) return;
     app.is_painting = false;
     const affected_hexes = app.terrain_painting_affected;
 
@@ -106,6 +106,10 @@ function renderTerrainPaintList() {
         box.classList = "terrain-paint-list-box";
         box.dataset.terrainKey = key;
         box.style.backgroundColor = `${terrain.background_color}`;
+        if (app.terrain_painting === key) {
+            box.classList.add("selected");
+            box.style.borderColor = "var(--selected-border-color)";
+        }
         box.onclick = () => {
             if (app.terrain_painting === key) {
                 app.terrain_painting = null;

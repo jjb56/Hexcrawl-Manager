@@ -35,9 +35,25 @@ function addFactionType() {
  */
 function deleteFactionType(faction_id) {
     const faction_data = structuredClone(app.data.factions[faction_id]);
+    const roll_tables = {};
+    for (const roll_table_id of faction_data.roll_table_ids) {
+        if (app.data.roll_tables[roll_table_id] !== undefined) {
+            roll_tables[roll_table_id] = structuredClone(app.data.roll_tables[roll_table_id]);
+        }
+    }
 
-    const do_action = () => delete app.data.factions[faction_id];
-    const undo_action = () => app.data.factions[faction_id] = structuredClone(faction_data);
+    const do_action = () => {
+        delete app.data.factions[faction_id];
+        for (const roll_table_id of faction_data.roll_table_ids) {
+            delete app.data.roll_tables[roll_table_id];
+        }
+    };
+    const undo_action = () => {
+        app.data.factions[faction_id] = structuredClone(faction_data);
+        for (const roll_table_id in roll_tables) {
+            app.data.roll_tables[roll_table_id] = structuredClone(roll_tables[roll_table_id]);
+        }
+    };
 
     do_action();
     commitToHistory(`Deleted ${faction_data.name}`, undo_action, do_action);
@@ -167,12 +183,12 @@ function renderFactionList() {
 function renderFaction(div_id, faction_id) {
     const faction = app.data.factions[faction_id];
     const editor = document.createElement("div");
-    editor.className = "faction-editor";
+    editor.className = "faction-editor"; //FIXME
     editor.innerHTML = `
         <div class="innerdiv">
-            name <input id="faction-name-${faction_id}" type="text" value="${faction.name}">
-            faction color <input id="faction-color-${faction_id}" type="color" value="${faction.color}">
-            icon <input id="faction-icon-${faction_id}" type="text" value="${faction.icon}">
+            name <input id="faction-name-${faction_id}" type="text" value="${faction.name}" data-history-path="factions.${faction_id}.name">
+            faction color <input id="faction-color-${faction_id}" type="color" value="${faction.color}" data-history-path="factions.${faction_id}.color">
+            icon <input id="faction-icon-${faction_id}" type="text" value="${faction.icon}" data-history-path="factions.${faction_id}.icon">
             <div id="roll-tables">
                 <h4>Roll Tables</h4>
                 <div id="faction-roll-tables-${faction_id}"></div>
@@ -185,12 +201,6 @@ function renderFaction(div_id, faction_id) {
     add_roll_table_button.textContent = "+ Add Roll Table";
     add_roll_table_button.className = "good-button";
     add_roll_table_button.onclick = () => createRollTable("factions", faction_id);
-
-    const inputs = editor.querySelectorAll("input");
-
-    inputs.forEach(input => {
-        input.onblur = () => saveFactionChanges(faction_id, editor);
-    });
 
     editor.addEventListener("focusout", event => {
         if (event.target.matches("input, textarea, select")) {

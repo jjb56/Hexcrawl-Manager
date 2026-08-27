@@ -54,10 +54,17 @@ body {
 h2 {
     text-align: center;
 }
+h3 {
+    margin-top: 0;
+}
+p {
+    margin: 0;
+    width: 100%;
+}
 hr {
     border: none;
     border-top: 1px solid var(--tool-border-color);
-    margin: 8px 0;
+    margin: 16px 0;
 }
 button {
     font-family: inherit;
@@ -98,6 +105,7 @@ button:active:not(:disabled) {
 .good-button {
     color: var(--add-color);
     border: 1px solid var(--add-color);
+    width: 100%;
 }
 .bad-button {
     color: var(--delete-color);
@@ -165,6 +173,7 @@ main {
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    touch-action: none;
     background-color: var(--section-bg-color);
     border-right: 1px solid var(--section-border-color);
 }
@@ -192,7 +201,12 @@ footer {
     display: flex;
     align-items: center;
     flex-direction: column;
-    margin-bottom: 16px;
+    margin-bottom: 0;
+}
+.tool-description {
+    font-style: italic;
+    color: var(--faded-text-color);
+    text-align: left;
 }
 .tool-area {
     display: flex;
@@ -207,7 +221,7 @@ footer {
     display: none;
 }
 .exit-tool-button {
-    margin-top: 16px;
+    margin-top: 0;
     padding: 8px 12px;
     background-color: var(--section-bg-color);
     border: 1px solid var(--tool-border-color);
@@ -228,9 +242,14 @@ footer {
 .terrain {
     display: flex;
     flex-direction: column;
-    margin: 8px 0;
+    /* margin: 8px 0; */
     border: 1px solid linear-gradient(to bottom, transparent, var(--form-border-color));
     border-radius: 4px;
+}
+#terrain-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 .innerdiv {
     width: 95%;
@@ -279,9 +298,14 @@ footer {
 .faction {
     display: flex;
     flex-direction: column;
-    margin: 8px 0;
+    margin: 0;
     border: 1px solid linear-gradient(to bottom, transparent, var(--form-border-color));
     border-radius: 4px;
+}
+#faction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 .faction button {
     width: 100%;
@@ -541,11 +565,28 @@ footer {
 
 /* ==================== Hex Map ==================== */
 #hex-map-surface {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+.hex-map-background {
+    position: absolute;
+    z-index: 0;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    pointer-events: none;
+}
+.hex-map-background img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    user-select: none;
 }
 .hex {
     position: absolute;
-    background: gray;
+    background: transparent;
     transform: scale(1.01);
     user-select: none;
 }
@@ -672,4 +713,55 @@ footer {
 }
 .terrain-paint-list-box:hover {
     filter: brightness(1.15);
+}
+
+/* ==================== Hex Configuration ==================== */
+.config-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.config-row > * {
+    flex: 1;
+    min-width: 0;
+}
+#or-selection {
+    text-align: center;
+}
+.percent-input::after {
+  content: "%";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--form-text-color);
+  pointer-events: none; /* Allows users to click through the symbol into the input */
+}
+.faction-paint-button {
+    min-width: 100px;
+    min-height: 42px;
+    padding: 4px 8px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font: inherit;
+    user-select: none;
+    transition: filter 0.12s ease, border-color 0.12s ease;
+}
+.faction-paint-button:hover {
+    filter: brightness(1.15);
+}
+.faction-paint-button.selected {
+    border-color: var(--selected-border-color);
+}
+#faction-paint-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
 }

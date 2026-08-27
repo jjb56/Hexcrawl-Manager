@@ -170,6 +170,7 @@ function renderHexHeader() {
     description.id = "hex-description";
     description.placeholder = "Enter a description for this region...";
     description.value = data.description || "";
+    description.dataset.historyPath = `map.${app.selected_hex}.description`;
 
     header.appendChild(title);
     header.appendChild(terrain);
@@ -208,6 +209,7 @@ function renderHexCities() {
         name.className = "hex-city-name";
         name.placeholder = "City name";
         name.value = city.name || "";
+        name.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.name`;
 
         // Population
         const population = document.createElement("input");
@@ -216,12 +218,14 @@ function renderHexCities() {
         population.min = "0";
         population.placeholder = "Population";
         population.value = city.population ?? "";
+        population.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.population`;
 
         // Description
         const description = document.createElement("textarea");
         description.className = "hex-city-description";
         description.placeholder = "Enter city description...";
         description.value = city.description || "";
+        description.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.description`;
 
         row.appendChild(name);
         row.appendChild(population);
@@ -383,6 +387,7 @@ function renderHexLandmarks() {
         // Icon selector
         const icon = document.createElement("select");
         icon.className = "hex-landmark-icon";
+        icon.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.icon`;
 
         const none_option = document.createElement("option");
         none_option.value = "";
@@ -399,12 +404,14 @@ function renderHexLandmarks() {
         name.className = "hex-landmark-name";
         name.placeholder = "Landmark name";
         name.value = landmark.name || "";
+        name.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.name`;
 
         // Landmark description
         const description = document.createElement("textarea");
         description.className = "hex-landmark-description";
         description.placeholder = "Enter landmark description...";
         description.value = landmark.description || "";
+        description.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.description`;
 
         row.appendChild(icon);
         row.appendChild(name);
@@ -469,6 +476,7 @@ function renderHexNotes() {
         note.className = "hex-note";
         note.placeholder = "Enter note...";
         note.value = notes[i];
+        note.dataset.historyPath = `map.${app.selected_hex}.notes.${i}`;
 
         row.appendChild(note);
         note_list.appendChild(row);
@@ -493,42 +501,52 @@ function renderHexAddFeature() {
 
     const select = document.createElement("select");
     select.id = "hex-select-property";
+    select.classList = "good-button";
+
+    // Default option
+    const default_option = document.createElement("option");
+    default_option.value = "";
+    default_option.textContent = "+ Add New Feature";
+    default_option.selected = true;
 
     const city_option = document.createElement("option");
     city_option.value = "city";
     city_option.textContent = "City";
 
-    const landmark_option = document.createElement("option");
-    landmark_option.value = "landmark";
-    landmark_option.textContent = "Landmark";
-
     const faction_option = document.createElement("option");
     faction_option.value = "faction";
     faction_option.textContent = "Faction";
+
+    const landmark_option = document.createElement("option");
+    landmark_option.value = "landmark";
+    landmark_option.textContent = "Landmark";
 
     const notes_option = document.createElement("option");
     notes_option.value = "notes";
     notes_option.textContent = "Notes";
 
+    const roll_table_option = document.createElement("option");
+    roll_table_option.value = "roll_table";
+    roll_table_option.textContent = "Roll Table";
+
+    select.appendChild(default_option);
     select.appendChild(city_option);
     select.appendChild(faction_option);
     select.appendChild(landmark_option);
     select.appendChild(notes_option);
+    select.appendChild(roll_table_option);
 
-    const add_button = document.createElement("button");
-    add_button.id = "hex-add-property";
-    add_button.className = "good-button";
-    add_button.type = "button";
-    add_button.textContent = "+ Add";
-    add_button.addEventListener("click", () => { 
-        switch (document.getElementById(select.id).value) {
+    select.addEventListener("change", () => {
+        switch (select.value) {
             case "city": {
                 const city = {
                     name: "New city",
                     population: 0,
                     description: ""
                 };
+
                 let created_array = false;
+
                 const do_action = () => {
                     const data = app.data.map[app.selected_hex];
                     if (!Array.isArray(data.cities)) {
@@ -542,6 +560,7 @@ function renderHexAddFeature() {
                     data.cities.pop();
                     if (created_array && data.cities.length === 0) delete data.cities;
                 };
+
                 do_action();
                 commitToHistory(`Added city to region ${app.selected_hex}`, undo_action, do_action);
                 break;
@@ -554,6 +573,7 @@ function renderHexAddFeature() {
                     description: ""
                 };
                 let created_array = false;
+
                 const do_action = () => {
                     const data = app.data.map[app.selected_hex];
                     if (!Array.isArray(data.landmarks)) {
@@ -567,6 +587,7 @@ function renderHexAddFeature() {
                     data.landmarks.pop();
                     if (created_array && data.landmarks.length === 0) delete data.landmarks;
                 };
+
                 do_action();
                 commitToHistory(`Added landmark to region ${app.selected_hex}`, undo_action, do_action);
                 break;
@@ -578,6 +599,7 @@ function renderHexAddFeature() {
                     presence: 400
                 };
                 let created_array = false;
+
                 const do_action = () => {
                     const data = app.data.map[app.selected_hex];
                     if (!Array.isArray(data.factions)) {
@@ -591,6 +613,7 @@ function renderHexAddFeature() {
                     data.factions.pop();
                     if (created_array && data.factions.length === 0) delete data.factions;
                 };
+
                 do_action();
                 commitToHistory(`Added faction to region ${app.selected_hex}`, undo_action, do_action);
                 break;
@@ -599,6 +622,7 @@ function renderHexAddFeature() {
             case "notes": {
                 const note = "";
                 let created_array = false;
+
                 const do_action = () => {
                     const data = app.data.map[app.selected_hex];
                     if (!Array.isArray(data.notes)) {
@@ -612,24 +636,26 @@ function renderHexAddFeature() {
                     data.notes.pop();
                     if (created_array && data.notes.length === 0) delete data.notes;
                 };
+
                 do_action();
                 commitToHistory(`Added note to region ${app.selected_hex}`, undo_action, do_action);
                 break;
             }
 
-            case "roll table":
+            case "roll_table":
                 createRollTable("map", app.selected_hex);
                 break;
 
             default:
-                console.log("No selection.");
+                return;
         }
+
+        // Return dropdown to "+ Add New Feature"
+        select.value = "";
         renderHexEditTool();
     });
 
     section.appendChild(select);
-    section.appendChild(add_button);
-
     owner_div.appendChild(section);
 }
 
@@ -644,6 +670,8 @@ function renderHexCloseButton() {
     button.className = "exit-tool-button";
     button.type = "button";
     button.textContent = "Close Region Window";
+    button.addEventListener("click", () => activateTool(tools.NONE));
+    
 
     owner_div.appendChild(button);
 }
