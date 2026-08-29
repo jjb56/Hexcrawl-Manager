@@ -16,7 +16,7 @@ function addTerrainType() {
     //set data
     const terrain_id = app.data.next_id++;
     const terrain_data = {
-        name: `New Terrain ${terrain_id}`,
+        name: "New Terrain",
         background_color: "#4481b9",
         icon: "?",
         icon_color: "#ffffff",
@@ -68,9 +68,14 @@ function deleteTerrainType(terrain_id) {
     commitToHistory(`Deleted ${terrain_data.name}`, undo_action, do_action);
 }
 
+
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
+/**
+ * Renders the list of existing terrains as clickable elements.
+ * @returns {void}
+ */
 function renderTerrainList() {
     // Renders the full list of geography
     const div = document.getElementById("terrain-list");
@@ -147,10 +152,10 @@ function renderTerrain(div_id, terrain_id) {
     editor.innerHTML = "";
     editor.innerHTML = `
         <div class="innerdiv">
-            name <input id="terrain-name-${terrain_id}" type="text" value="${terrain.name}" data-history-path="geography.${terrain_id}.name">
-            background color <input id="terrain-background-color-${terrain_id}" type="color" value="${terrain.background_color}" data-history-path="geography.${terrain_id}.background_color">
-            icon <input id="terrain-icon-${terrain_id}" type="text" value="${terrain.icon}" data-history-path="geography.${terrain_id}.icon">
-            icon color <input id="terrain-icon-color-${terrain_id}" type="color" value="${terrain.icon_color}" data-history-path="geography.${terrain_id}.icon_color">
+            <div class="split-25-75"><label>Name</label><input id="terrain-name-${terrain_id}" type="text" value="${terrain.name}" data-history-path="geography.${terrain_id}.name"></div>
+            <div class="split-50-50"><label>Background</label><input id="terrain-background-color-${terrain_id}" type="color" value="${terrain.background_color}" data-history-path="geography.${terrain_id}.background_color"></div>
+            <div class="split-50-50"><label>Icon</label><input id="terrain-icon-${terrain_id}" type="text" value="${terrain.icon}" data-history-path="geography.${terrain_id}.icon"></div>
+            <div class="split-50-50"><label>Icon Color</label><input id="terrain-icon-color-${terrain_id}" type="color" value="${terrain.icon_color}" data-history-path="geography.${terrain_id}.icon_color"></div>
             <div id="roll-tables">
                 <h4>Roll Tables</h4>
                 <div id="terrain-roll-tables-${terrain_id}"></div>
@@ -190,11 +195,6 @@ function renderTerrain(div_id, terrain_id) {
 
     renderRollTables(`terrain-roll-tables-${terrain_id}`, terrain.roll_table_ids, false, "geography", terrain_id);
     table_div.appendChild(add_roll_table_button);
-}
-
-function renderGeographyTool() {
-    // Renders the initialization of the geography tool when selected.
-    renderTerrainList();
 }
 
 //========================================================================================================================================

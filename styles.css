@@ -112,6 +112,26 @@ button:active:not(:disabled) {
     border: 1px solid var(--delete-color);
 }
 
+.split-25-75, .split-50-50, .split-75-25 {
+    display: grid;
+    align-items: center;
+    gap: 0.5rem;
+}
+.split-25-75 {
+    grid-template-columns: 1fr 3fr;
+}
+.split-50-50 {
+    grid-template-columns: 1fr 1fr;
+}
+.split-75-25 {
+    grid-template-columns: 3fr 1fr;
+}
+.split-50-50 > :not(label), .split-75-25 > :not(label), .split-25-75 > :not(label) {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
 /* ==================== Header ==================== */
 header {
     display: flex;
@@ -125,7 +145,12 @@ header {
 #logobar {
     display: flex;
     align-items: center;
+    width: 100%;
+}
+.main-info {
+    display: flex;
     flex-direction: row;
+    align-items: center;
 }
 #logo {
     font-size: 18px;
@@ -137,6 +162,19 @@ header {
     font-size: 14px;
     white-space: nowrap;
     padding: 4px 0px;
+}
+
+#other-buttons {
+    margin-left: auto;
+    font-style: italic;
+    align-items: center;
+}
+.support-button {
+    align-items: center;
+    padding: 0 12px;
+    border: 1px solid var(--form-border-color);
+    border-top: none;
+    border-bottom: none;
 }
 
 #toolbar {

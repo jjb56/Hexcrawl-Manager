@@ -230,12 +230,6 @@ document.querySelectorAll(".exit-tool-button").forEach(button => {
 
 document.addEventListener("DOMContentLoaded", () => activateTool(tools.NONE));
 
-// timer
-function resetTimer(timer) {
-    clearTimeout(timer);
-    timer = setTimeout(() => saveTerrainChanges(), 7000);
-}
-
 //re-render tool
 function renderCurrentTool() {
 	switch (app.current_tool) {

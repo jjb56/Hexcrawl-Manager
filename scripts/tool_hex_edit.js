@@ -2,34 +2,6 @@
     This file contains code related to the hex drawing and selecting surface.
 */
 
-/* Format
-const app = {
-    data: {
-        map: {
-            "3,5": {
-                geography_id: 0|null,
-                description: "First Test Cell",
-                cities: [
-                    { //optional
-                        name: "City of Doom",
-                        population: 10000,
-                        description: ""
-                    }
-                ],
-                factions: [ //optional, drawn as border around faction owned area, with thicker border for higher ratio of presence.
-                    { faction_id: 1, presence: 400 }
-                ], 
-                landmarks: [ //optional
-                    { name: "Stone", icon: "", description: "An obelisk or something" }
-                ],
-                roll_table_ids: [3], //optional, but always displays the geography and faction-related tables below the hex tables
-                notes: ["A dangerous zone full of mortals"] //optional
-            }
-        }
-    }
-}
-*/
-
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================

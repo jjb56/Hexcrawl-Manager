@@ -2,6 +2,29 @@
     This file contains code related to the hex drawing and selecting surface.
 */
 
+let map_camera;
+map_camera = {
+    scale: 1,
+    x: 0,
+    y: 0,
+    min_scale: 0.25,
+    max_scale: 4,
+    zoom_focus_x: null,
+    zoom_focus_y: null,
+    is_panning: false,
+    pointer_id: null,
+    start_pointer_x: 0,
+    start_pointer_y: 0,
+    start_camera_x: 0,
+    start_camera_y: 0
+};
+
+
+renderHexes();
+setupMapCamera();
+updateMapSurfaceSize();
+applyMapCamera();
+
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================
@@ -9,9 +32,9 @@
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
-
-let map_camera;
-
+/**
+ * 
+ */
 function renderHexes() {
     const config = app.data.hex_configuration;
 
@@ -40,28 +63,21 @@ function renderHexes() {
     updateMapSurfaceSize();
     if (map_camera) applyMapCamera();
 }
-renderHexes();
 
-map_camera = {
-    scale: 1,
-    x: 0,
-    y: 0,
-    min_scale: 0.25,
-    max_scale: 4,
-    zoom_focus_x: null,
-    zoom_focus_y: null,
-    is_panning: false,
-    pointer_id: null,
-    start_pointer_x: 0,
-    start_pointer_y: 0,
-    start_camera_x: 0,
-    start_camera_y: 0
-};
 
+/**
+ * 
+ * @returns 
+ */
 function getMapSurface() {
     return document.getElementById("hex-map-surface");
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function getMapBounds() {
     const config = app.data.hex_configuration;
     const dimensions = getHexDimensions(config);
@@ -89,6 +105,11 @@ function getMapBounds() {
     return { width: Math.max(0, width), height: Math.max(0, height) };
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function updateMapSurfaceSize() {
     const surface = getMapSurface();
     if (!surface) return;
@@ -98,6 +119,11 @@ function updateMapSurfaceSize() {
     surface.style.height = `${bounds.height}px`;
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function getCameraLimits() {
     const map_area = document.getElementById("map-area");
     const bounds = getMapBounds();
@@ -114,12 +140,21 @@ function getCameraLimits() {
     };
 }
 
+
+/**
+ * 
+ */
 function clampMapCamera() {
     const limits = getCameraLimits();
     map_camera.x = Math.min(limits.max_x, Math.max(limits.min_x, map_camera.x));
     map_camera.y = Math.min(limits.max_y, Math.max(limits.min_y, map_camera.y));
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function applyMapCamera() {
     const surface = getMapSurface();
     if (!surface) return;
@@ -128,6 +163,14 @@ function applyMapCamera() {
     surface.style.transform = `translate(${map_camera.x}px, ${map_camera.y}px) scale(${map_camera.scale})`;
 }
 
+
+/**
+ * 
+ * @param {*} next_scale 
+ * @param {*} focus_x 
+ * @param {*} focus_y 
+ * @returns 
+ */
 function setMapZoom(next_scale, focus_x = null, focus_y = null) {
     const map_area = document.getElementById("map-area");
     const surface = getMapSurface();
@@ -149,14 +192,27 @@ function setMapZoom(next_scale, focus_x = null, focus_y = null) {
     applyMapCamera();
 }
 
+
+/**
+ * 
+ */
 function zoomMapIn() {
     setMapZoom(map_camera.scale * 1.2, ...getMapZoomFocus());
 }
 
+
+/**
+ * 
+ */
 function zoomMapOut() {
     setMapZoom(map_camera.scale / 1.2, ...getMapZoomFocus());
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function getMapZoomFocus() {
     const map_area = document.getElementById("map-area");
     return [
@@ -165,6 +221,10 @@ function getMapZoomFocus() {
     ];
 }
 
+
+/**
+ * 
+ */
 function resetMapZoom() {
     map_camera.scale = 1;
     map_camera.x = 0;
@@ -172,10 +232,16 @@ function resetMapZoom() {
     applyMapCamera();
 }
 
+
+/**
+ * 
+ * @returns 
+ */
 function isFormElementActive() {
     const active_element = document.activeElement;
     return active_element?.matches("input, textarea, select, button, [contenteditable=\"true\"]") ?? false;
 }
+
 
 document.addEventListener("keydown", event => {
     if (event.isComposing || isFormElementActive()) return;
@@ -209,6 +275,11 @@ document.addEventListener("keydown", event => {
     }
 });
 
+
+/**
+ * 
+ * @returns 
+ */
 function setupMapCamera() {
     const map_area = document.getElementById("map-area");
     if (!map_area) return;
@@ -264,9 +335,6 @@ function setupMapCamera() {
     window.addEventListener("resize", applyMapCamera);
 }
 
-setupMapCamera();
-updateMapSurfaceSize();
-applyMapCamera();
 
 /**
  * Updates the hover state of a single hex.
@@ -391,7 +459,7 @@ function renderHexTerrain(hex_key) {
     const show_empty_cell_background = app.data.hex_configuration.show_empty_cell_background !== false;
     const show_geography_background_colors = app.data.hex_configuration.show_geography_background_colors !== false;
 
-    if (!hex_data || hex_data.geography_id === undefined) {
+    if (!hex_data || hex_data.geography_id === null || hex_data.geography_id === undefined) {
         hex.style.backgroundColor = show_empty_cell_background && show_geography_background_colors ? "gray" : "transparent";
         return;
     }
@@ -530,6 +598,12 @@ function refreshFactionBorderNeighbors(hex_key) {
     }
 }
 
+
+/**
+ * 
+ * @param {*} hex_key 
+ * @returns 
+ */
 function renderFactionBorders(hex_key) {
     const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
     const hex_data = app.data.map[hex_key];
@@ -836,7 +910,11 @@ function renderHex(hex_key) {
 //========================================================================================================================================
 //              Helper Functions
 //========================================================================================================================================
-
+/**
+ * 
+ * @param {*} config 
+ * @returns 
+ */
 function getHexDimensions(config) {
     const shape_key = config.shape.replace("-", "_");
     const default_dimensions = app.shape_sizes[shape_key];
@@ -849,6 +927,13 @@ function getHexDimensions(config) {
     };
 }
 
+/**
+ * 
+ * @param {*} shape 
+ * @param {*} width 
+ * @param {*} height 
+ * @returns 
+ */
 function getHexPolygonPoints(shape, width, height) {
     switch (shape) {
         case "pointy-top":

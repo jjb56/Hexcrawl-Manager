@@ -2,6 +2,10 @@
     This file contains all related functionality for the hex configuration tool.
 */
 
+let bg_image_object_url = null;
+
+renderBackground();
+
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================
@@ -11,7 +15,10 @@
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
-
+/**
+ * 
+ * @returns {void}
+ */
 function renderHexConfiguration() {
     const container = document.getElementById("hex-configuration-content");
     container.innerHTML = "";
@@ -19,52 +26,55 @@ function renderHexConfiguration() {
     const html = `
         <div class="config-map-size">
             <h3>Map Size</h3>
-            <div class="config-row"><label for="map-width">Cells Wide</label><input type="number" value="${config.map_width}" id="map-width" data-history-path="hex_configuration.map_width"></div>
-            <div class="config-row"><label for="map-height">Cells High</label><input type="number" value="${config.map_height}" id="map-height" data-history-path="hex_configuration.map_height"></div>
+            <div class="split-50-50"><label for="map-width">Map Width</label><input type="number" value="${config.map_width}" id="map-width" data-history-path="hex_configuration.map_width"></div>
+            <div class="split-50-50"><label for="map-height">Map Height</label><input type="number" value="${config.map_height}" id="map-height" data-history-path="hex_configuration.map_height"></div>
         </div>
         <hr>
         <div id="config-hex-shape">
-            <h3>Grid Cell Shape</h3>
-            <div class="config-row"><label for="hex-type-pointy-top">Pointy-Top Hex</label><input type="radio" id="hex-type-pointy-top" name="grid-cell-shape" value="pointy-top" ${config.shape === "pointy-top" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
-            <div class="config-row"><label for="hex-type-flat-top">Flat-Top Hex</label><input type="radio" id="hex-type-flat-top" name="grid-cell-shape" value="flat-top" ${config.shape === "flat-top" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
-            <div class="config-row"><label for="hex-type-square">Square</label><input type="radio" id="hex-type-square" name="grid-cell-shape" value="square" ${config.shape === "square" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
+            <h3>Cell Shape</h3>
+            <div class="split-50-50"><label for="hex-type-pointy-top">Pointy-Top Hex</label><input type="radio" id="hex-type-pointy-top" name="grid-cell-shape" value="pointy-top" ${config.shape === "pointy-top" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
+            <div class="split-50-50"><label for="hex-type-flat-top">Flat-Top Hex</label><input type="radio" id="hex-type-flat-top" name="grid-cell-shape" value="flat-top" ${config.shape === "flat-top" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
+            <div class="split-50-50"><label for="hex-type-square">Square</label><input type="radio" id="hex-type-square" name="grid-cell-shape" value="square" ${config.shape === "square" ? "checked" : ""} data-history-path="hex_configuration.shape"></div>
         </div>
         <hr>
         <div id="config-grid-size">
-            <h3>Grid Size</h3>
-            <div class="config-row"><label for="grid-size-width">Cell Width</label><input type="number" value="${config.cell_width}" id="grid-size-width" data-history-path="hex_configuration.cell_width"></div>
-            <div class="config-row"><label for="grid-size-height">Cell Height</label><input type="number" value="${config.cell_height}" id="grid-size-height" data-history-path="hex_configuration.cell_height"></div>
+            <h3>Cell Size</h3>
+            <div class="split-50-50"><label for="grid-size-width">Cell Width</label><input type="number" value="${config.cell_width}" id="grid-size-width" data-history-path="hex_configuration.cell_width"></div>
+            <div class="split-50-50"><label for="grid-size-height">Cell Height</label><input type="number" value="${config.cell_height}" id="grid-size-height" data-history-path="hex_configuration.cell_height"></div>
         </div>
         <hr>
         <div class="config-bg-image">
             <h3>Background Image</h3>
-            <div class="config-row"><label for="bg-image-url">Image URL</label><input type="url" value="${config.bg_image || ""}" id="bg-image-url" placeholder="URL" data-history-path="hex_configuration.bg_image"></div>
+            <div class="split-50-50"><label for="bg-image-url">Image URL</label><input type="url" value="${config.bg_image || ""}" id="bg-image-url" placeholder="URL" data-history-path="hex_configuration.bg_image"></div>
             <div class="config-row"><span id="or-selection"><i>OR</i></span></div>
             <div class="config-row"><input type="file" id="bg-image-file" data-history-path="hex_configuration.bg_image"></div>
             <br>
-            <div class="config-row"><label for="bg-xscale">Stretch Width</label><input type="number" class="percent-input" value="${config.bg_stretch_x}" id="bg-xscale" min="0" data-history-path="hex_configuration.bg_stretch_x"></div>
-            <div class="config-row"><label for="bg-yscale">Stretch Height</label><input type="number" class="percent-input" value="${config.bg_stretch_y}" id="bg-yscale" min="0" data-history-path="hex_configuration.bg_stretch_y"></div>
-            <div class="config-row"><label for="bg-xoffset">X Offset</label><input type="number" value="${config.bg_offset_x}" id="bg-xoffset" data-history-path="hex_configuration.bg_offset_x"></div>
-            <div class="config-row"><label for="bg-yoffset">Y Offset</label><input type="number" value="${config.bg_offset_y}" id="bg-yoffset" data-history-path="hex_configuration.bg_offset_y"></div>
-            <div class="config-row"><label for="bg-alpha">Image Alpha</label><input type="number" class="percent-input" value="${config.bg_alpha}" id="bg-alpha" min="0" data-history-path="hex_configuration.bg_alpha"></div>
+            <div class="split-75-25"><label for="bg-xscale">Stretch Width %</label><input type="number" class="percent-input" value="${config.bg_stretch_x}" id="bg-xscale" min="0" data-history-path="hex_configuration.bg_stretch_x"></div>
+            <div class="split-75-25"><label for="bg-yscale">Stretch Height %</label><input type="number" class="percent-input" value="${config.bg_stretch_y}" id="bg-yscale" min="0" data-history-path="hex_configuration.bg_stretch_y"></div>
+            <div class="split-75-25"><label for="bg-xoffset">X Offset</label><input type="number" value="${config.bg_offset_x}" id="bg-xoffset" data-history-path="hex_configuration.bg_offset_x"></div>
+            <div class="split-75-25"><label for="bg-yoffset">Y Offset</label><input type="number" value="${config.bg_offset_y}" id="bg-yoffset" data-history-path="hex_configuration.bg_offset_y"></div>
+            <div class="split-75-25"><label for="bg-alpha">Image Alpha %</label><input type="number" class="percent-input" value="${config.bg_alpha}" id="bg-alpha" min="0" max="100" data-history-path="hex_configuration.bg_alpha"></div>
         </div>
         <hr>
         <div id="config-show-features">
-            <h3>Grid Display</h3>
-            <div class="config-row"><label for="show-coordinates">Show Coordinates</label><input type="checkbox" id="show-coordinates" ${config.show_coordinates ? "checked" : ""} data-history-path="hex_configuration.show_coordinates"></div>
-            <div class="config-row"><label for="show-empty-cell-background">Show Empty Cell Background</label><input type="checkbox" id="show-empty-cell-background" ${config.show_empty_cell_background !== false ? "checked" : ""} data-history-path="hex_configuration.show_empty_cell_background"></div>
-            <div class="config-row"><label for="show-geography-background-colors">Show Geography Background Colors</label><input type="checkbox" id="show-geography-background-colors" ${config.show_geography_background_colors !== false ? "checked" : ""} data-history-path="hex_configuration.show_geography_background_colors"></div>
-            <div class="config-row"><label for="show-icons">Icon Alpha</label><input type="number" class="percent-input" value="${config.icon_alpha}" id="show-icons" min="0" max="100" data-history-path="hex_configuration.icon_alpha"></div>
-            <div class="config-row"><label for="border-size">Border Size</label><input type="number" value="${config.border_width}" id="border-size" min="0" data-history-path="hex_configuration.border_width"></div>
-            <div class="config-row"><label for="faction-border-size">Faction Border Size</label><input type="number" value="${config.faction_border_width}" id="faction-border-size" min="0" data-history-path="hex_configuration.faction_border_width"></div>
-            <div class="config-row"><label for="faction-border-alpha">Faction Border Alpha</label><input type="number" class="percent-input" value="${config.faction_border_alpha}" id="faction-border-alpha" min="0" max="100" data-history-path="hex_configuration.faction_border_alpha"></div>
+            <h3>Cell Settings</h3>
+            <div class="split-75-25"><label for="show-coordinates">Show Coordinates</label><input type="checkbox" id="show-coordinates" ${config.show_coordinates ? "checked" : ""} data-history-path="hex_configuration.show_coordinates"></div>
+            <div class="split-75-25"><label for="show-empty-cell-background">Show Empty Color</label><input type="checkbox" id="show-empty-cell-background" ${config.show_empty_cell_background !== false ? "checked" : ""} data-history-path="hex_configuration.show_empty_cell_background"></div>
+            <div class="split-75-25"><label for="show-geography-background-colors">Show Terrain Colors</label><input type="checkbox" id="show-geography-background-colors" ${config.show_geography_background_colors !== false ? "checked" : ""} data-history-path="hex_configuration.show_geography_background_colors"></div>
+            <div class="split-75-25"><label for="show-icons">Icon Alpha %</label><input type="number" class="percent-input" value="${config.icon_alpha}" id="show-icons" min="0" max="100" data-history-path="hex_configuration.icon_alpha"></div>
+            <div class="split-75-25"><label for="border-size">Border Size</label><input type="number" value="${config.border_width}" id="border-size" min="0" data-history-path="hex_configuration.border_width"></div>
+            <div class="split-75-25"><label for="faction-border-size">Faction Border Size</label><input type="number" value="${config.faction_border_width}" id="faction-border-size" min="0" data-history-path="hex_configuration.faction_border_width"></div>
+            <div class="split-75-25"><label for="faction-border-alpha">Faction Border Alpha %</label><input type="number" class="percent-input" value="${config.faction_border_alpha}" id="faction-border-alpha" min="0" max="100" data-history-path="hex_configuration.faction_border_alpha"></div>
         </div>
     `;
     container.innerHTML = html;
 }
 
-let bg_image_object_url = null;
 
+/**
+ * 
+ * @returns {void}
+ */
 function renderBackground() {
     const surface = document.getElementById("hex-map-surface");
     const config = app.data.hex_configuration;
@@ -106,6 +116,9 @@ function renderBackground() {
     background.style.opacity = Math.min(100, Math.max(0, Number(config.bg_alpha))) / 100;
 }
 
+//========================================================================================================================================
+//              Event Listeners
+//========================================================================================================================================
 document.addEventListener("change", event => {
     const element = event.target;
     if (element.id === "bg-image-file" && element.files?.[0]) {
@@ -133,5 +146,3 @@ document.addEventListener("change", event => {
         renderBackground();
     }
 });
-
-renderBackground();

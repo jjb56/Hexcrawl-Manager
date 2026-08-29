@@ -2,8 +2,6 @@
     This file contains the framework for manipulating data within the app.
 */
 
-let edit_timer = null;
-
 document.addEventListener("change", event => {
     //get data
     const element = event.target;
@@ -251,7 +249,7 @@ function createRollTable(current_tool, owner_id) {
     //set data
     const table_id = app.data.next_id++;
     const table = {
-        name: `Roll Table ${table_id}`,
+        name: "New Roll Table",
         rows: [
             ["Roll", "Result"],
             ["", ""]

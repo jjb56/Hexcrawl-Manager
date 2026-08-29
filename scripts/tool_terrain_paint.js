@@ -33,9 +33,21 @@ function paintTerrain(hex_key) {
         previous_type: previous_type
     });
 
-    app.data.map[hex_key].geography_id = app.terrain_painting;
-    renderHexTerrain(hex_key);
-    renderHexIcon(hex_key);
+    setTerrainPaintHex(hex_key, app.terrain_painting);
+}
+
+
+function setTerrainPaintHex(hex_id, terrain_id) {
+    if (!app.data.map[hex_id]) {
+        app.data.map[hex_id] = {
+            geography_id: null,
+            description: ""
+        };
+    }
+
+    app.data.map[hex_id].geography_id = terrain_id;
+    renderHexTerrain(hex_id);
+    renderHexIcon(hex_id);
 }
 
 /**
@@ -62,15 +74,13 @@ function endTerrainPaint() {
     //history management
     const undo_method = () => {
 		for (const hex of affected_hexes) {
-			app.data.map[hex.hex_id].geography_id = hex.previous_type;
-            renderHex(hex.hex_id);
+			setTerrainPaintHex(hex.hex_id, hex.previous_type);
 		}
 	};
 
 	const redo_method = () => {
 		for (const hex of affected_hexes) {
-            app.data.map[hex.hex_id].geography_id = terrain_id;
-            renderHex(hex.hex_id);
+            setTerrainPaintHex(hex.hex_id, terrain_id);
 		}
 	};
 

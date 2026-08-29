@@ -1,5 +1,5 @@
 /*
-    This file contains functions related to the menu bar, that is file, edit, view, etc.
+    This file contains functions related to the menu bar.
     File | Edit | View | Tools | Help
 */
 
@@ -45,12 +45,38 @@ function newMap() {
     renderHexes();
     showMessage("Created new map", true);
 }
+document.querySelector("#button-file-new").addEventListener("click", newMap);
+
 
 // File - Open
 function openMap() {
     //used the hidden file selector at the bottom of the page
     document.getElementById("map-file-input").click();
 }
+document.getElementById("map-file-input").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const data = JSON.parse(event.target.result);
+            app.data = data;
+            app.document.name = file.name;
+            app.document.has_unsaved_changes = false;
+            renderHexes();
+            renderFileName();
+            showMessage(`Opened ${file.name}`, true);
+        } catch (error) {
+            console.error(error);
+            showMessage(`Could not open ${file.name}: ${error.message}`, false);
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ""; // Allows the user to open the same file again later
+});
+document.querySelector("#button-file-open").addEventListener("click", openMap);
+
 
 // File - Save
 async function saveMap() {
@@ -72,6 +98,8 @@ async function saveMap() {
 
     renderFileName();
 }
+document.querySelector("#button-file-save").addEventListener("click", saveMap);
+
 
 // // File - Save As
 // function saveMapAs() {
@@ -94,6 +122,8 @@ function undo() {
     updateHistoryButtons();
     return true;
 }
+document.querySelector("#button-edit-undo").addEventListener("click", undo);
+
 
 // Edit - Redo
 function redo() {
@@ -110,80 +140,36 @@ function redo() {
     updateHistoryButtons();
     return true;
 }
+document.querySelector("#button-edit-redo").addEventListener("click", redo);
 
+// Edit
 function updateHistoryButtons() {
     document.querySelector("#button-edit-undo").disabled = app.history.undo.length === 0;
     document.querySelector("#button-edit-redo").disabled = app.history.redo.length === 0;
 }
-
-// // Edit - Cut
-// function cut() {
-//     //cut the selected element to the clipboard
-// }
-
-// // Edit - Copy
-// function copy() {
-//     //copy the selected element to the clipboard
-// }
-
-// // Edit - Paste
-// function paste() {
-//     //paste the element from the clipboard
-// }
+updateHistoryButtons();
 
 
 // View - Zoom In
 function zoomIn() {
     zoomMapIn();
 }
+document.querySelector("#button-view-zoom-in").addEventListener("click", zoomIn);
+
 
 // View - Zoom Out
 function zoomOut() {
     zoomMapOut();
 }
+document.querySelector("#button-view-zoom-out").addEventListener("click", zoomOut);
+
+
 // View - Zoom Reset
 function zoomReset() {
     resetMapZoom();
 }
-
-
-//File
-document.querySelector("#button-file-new").addEventListener("click", newMap);
-document.querySelector("#button-file-open").addEventListener("click", openMap);
-document.getElementById("map-file-input").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        try {
-            const data = JSON.parse(event.target.result);
-            app.data = data;
-            app.document.name = file.name;
-            app.document.has_unsaved_changes = false;
-            renderHexes();
-            renderFileName();
-            showMessage(`Opened ${file.name}`, true);
-        } catch (error) {
-            console.error(error);
-            showMessage("Could not open map file.", false);
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = ""; // Allows the user to open the same file again later
-});
-document.querySelector("#button-file-save").addEventListener("click", saveMap);
-
-
-//Edit
-document.querySelector("#button-edit-undo").addEventListener("click", undo);
-document.querySelector("#button-edit-redo").addEventListener("click", redo);
-updateHistoryButtons();
-
-// View
-document.querySelector("#button-view-zoom-in").addEventListener("click", zoomIn);
-document.querySelector("#button-view-zoom-out").addEventListener("click", zoomOut);
 document.querySelector("#button-view-zoom-reset").addEventListener("click", zoomReset);
+
 
 //Tools
 document.querySelector("#button-tools-terrain-paint").addEventListener("click", () => activateTool(tools.TERRAIN_PAINT));
@@ -192,10 +178,12 @@ document.querySelector("#button-tools-geography").addEventListener("click", () =
 document.querySelector("#button-tools-factions").addEventListener("click", () => activateTool(tools.FACTIONS));
 document.querySelector("#button-tools-hex-configuration").addEventListener("click", () => activateTool(tools.HEX_CONFIGURATION));
 
+
 // Help - Manual
 function displayManual() {
     //display the manual
 }
+
 
 // Help - About
 function displayAbout() {
@@ -205,7 +193,10 @@ function displayAbout() {
 // Help - Version
 //no tool, only a disabled button that displays a modal with information about the application
 
-// Menu Clicking Functionality
+
+//========================================================================================================================================
+//              Menu Initialization
+//========================================================================================================================================
 const menuButtons = document.querySelectorAll(".menu-button");
 const menus = document.querySelectorAll(".dropdown-menu");
 
@@ -250,18 +241,11 @@ document.addEventListener("keydown", function(event) {
 
         case "s":
             event.preventDefault();
-            if (event.shiftKey) {
-                saveMapAs();
-            } else {
-                saveMap();
-            }
+            saveMap();
             break;
     }
 });
 
-//========================================================================================================================================
-//              Helper Functions
-//========================================================================================================================================
 function openMenu(button) {
     closeAllMenus();
 
