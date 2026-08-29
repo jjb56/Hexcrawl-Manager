@@ -53,12 +53,14 @@ function deleteTerrainType(terrain_id) {
         for (const roll_table_id of terrain_data.roll_table_ids) {
             delete app.data.roll_tables[roll_table_id];
         }
+        renderHexes();
     };
     const undo_action = () => {
         app.data.geography[terrain_id] = structuredClone(terrain_data);
         for (const roll_table_id in roll_tables) {
             app.data.roll_tables[roll_table_id] = structuredClone(roll_tables[roll_table_id]);
         }
+        renderHexes();
     };
 
     //execute actions

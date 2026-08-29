@@ -38,7 +38,7 @@ let app = {
     },
     document: {
         name: "Untitled.json",
-        hasUnsavedChanges: false
+        has_unsaved_changes: false
     },
 	shape_sizes: {
 		pointy_top: [87, 100],

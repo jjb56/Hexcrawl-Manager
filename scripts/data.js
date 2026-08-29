@@ -26,7 +26,8 @@ document.addEventListener("change", event => {
 
     //execution
     do_action();
-    commitToHistory(`Changed ${path}`, undo_action, do_action);
+
+    commitToHistory(getHistoryActionName(path), undo_action, do_action);
 });
 
 //========================================================================================================================================
@@ -49,10 +50,103 @@ function commitToHistory(action_name, undo_method, redo_method) {
         redo: redo_method
     });
     console.log(action_name);
+    showMessage(action_name, true);
     // showMessage(action_name);
     //clear the redo stack if an edit is made.
+    app.document.has_unsaved_changes = true;
+    renderFileName();
     app.history.redo = [];
     updateHistoryButtons();
+}
+
+/**
+ * Converts a technical data path into a user-friendly history action description.
+ * @param {string} path Dot-separated property path in `app.data`.
+ * @returns {string} Human-readable action name.
+ */
+function getHistoryActionName(path) {
+    if (typeof path === "string") path = path.split("."); // Normalize path into an array
+    if (path[0] === "data") path = path.slice(1); // Remove "data" from the beginning
+    const property = path[path.length - 1];
+
+    function formatHistoryName(value) {
+        return String(value)
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+    }  
+
+    // Special case: hex configuration
+    if (path[0] === "hex_configuration") {
+        const names = {
+            map_width: "map width",
+            map_height: "map height",
+            shape: "shape",
+            cell_width: "cell width",
+            cell_height: "cell height",
+
+            bg_image: "background image",
+            bg_stretch_x: "background stretch",
+            bg_stretch_y: "background stretch",
+            bg_offset_x: "background offset",
+            bg_offset_y: "background offset",
+            bg_alpha: "background opacity",
+
+            show_coordinates: "coordinate display",
+            show_empty_cell_background: "empty cell background",
+            show_geography_background_colors: "geography background colors",
+            icon_alpha: "icon opacity",
+            faction_border_width: "faction border width",
+            faction_border_alpha: "faction border opacity",
+            border_width: "border width"
+        };
+        return `Changed ${names[property] || property}`;
+    }
+
+    // Map hex
+    if (path[0] === "map") {
+        const hex = path[1];
+        if (path.length >= 3) { // data.map["3,5"].description
+            const names = {
+                geography_id: "geography",
+                description: "description",
+                cities: "city",
+                factions: "faction",
+                landmarks: "landmark",
+                roll_table_ids: "roll table",
+                notes: "note"
+            };
+            return `Changed region ${hex} ${names[property] || property}`;
+        }
+        return `Changed region ${hex}`; // data.map["3,5"] itself
+    }
+
+    // Geography
+    if (path[0] === "geography") {
+        const id = path[1];
+        const geography = app.data.geography[id];
+        // If changing the name, the thing itself is the geography.
+        if (property === "name") return `Changed ${geography?.name || `geography ${id}`} name`;
+        return `Changed ${geography?.name || `geography ${id}`} ${formatHistoryName(property)}`;
+    }
+
+    // Factions
+    if (path[0] === "factions") {
+        const id = path[1];
+        const faction = app.data.factions[id];
+        if (property === "name") return `Changed ${faction?.name || `faction ${id}`} name`;
+        return `Changed ${faction?.name || `faction ${id}`} ${formatHistoryName(property)}`;
+    }
+
+    // Roll tables
+    if (path[0] === "roll_tables") {
+        const id = path[1];
+        const table = app.data.roll_tables[id];
+        if (property === "name") return `Changed ${table?.name || `roll table ${id}`} name`;
+        return `Changed ${table?.name || `roll table ${id}`} ${formatHistoryName(property)}`;
+    }
+
+    // Fallback
+    return `Changed ${formatHistoryName(path[path.length - 2] || "data")} ${formatHistoryName(property)}`;
 }
 
 /**
@@ -113,6 +207,34 @@ function getFormValue(element) {
     if (element.dataset.valueType === "number") return element.value === "" ? null : Number(element.value);
     if (element.type === "radio") return element.checked ? element.value : null;
     return element.value;
+}
+
+/**
+ * Displays a fading message in the proper section of the page.
+ * @param {string} string The message to show.
+ * @param {boolean} is_good Wether the message is a success or an error.
+ * @returns {void}
+ */
+function showMessage(string, is_success) {
+    const message_div = document.createElement("div");
+    message_div.classList = is_success ? "message success" : "message error";
+    message_div.textContent = string;
+
+    const message_area = document.getElementById("messages");
+    message_area.appendChild(message_div);
+
+    setTimeout(() => {
+        message_div.style.opacity = "0";
+        message_div.style.transition = "opacity 0.5s ease";
+    }, 4500);
+
+    setTimeout(() => {
+        message_div.remove();
+    }, 5000);
+}
+
+function getMapJSON() {
+    return JSON.stringify(app.data, null, 4);
 }
 
 //========================================================================================================================================
@@ -620,3 +742,22 @@ function renderRollTable(div_id, roll_table_id, read_only = false, owner_tool = 
     container.innerHTML = html;
 }
 
+
+function renderFileName() {
+    const container = document.getElementById("file-name");
+    if (!container || !app.document) return;
+
+    const filename = app.document.name || "Unsaved File";
+    const name_text = document.createTextNode(filename);
+
+    container.innerHTML = "";
+
+    if (app.document.has_unsaved_changes) {
+        const label = document.createElement("i");
+        label.textContent = `${filename}*`;
+        container.appendChild(label);
+    } else {
+        container.appendChild(name_text);
+    }
+}
+renderFileName();

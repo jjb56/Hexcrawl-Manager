@@ -18,9 +18,9 @@
                 <div class="menu-item" id="file-menu">
                     <button class="menu-button" type="button">File</button>
                     <div class="dropdown-menu" id="file-dropdown">
-                        <button id="button-file-new" type="button" disabled>New</button>
-                        <button id="button-file-open" type="button" disabled>Open</button>
-                        <button id="button-file-save" type="button" disabled>Save</button>
+                        <button id="button-file-new" type="button">New</button>
+                        <button id="button-file-open" type="button">Open</button>
+                        <button id="button-file-save" type="button">Save</button>
                         <button id="button-file-save-as" type="button" disabled>Save As</button>
                     </div>
                 </div>
@@ -60,13 +60,13 @@
                 <div class="menu-item" id="help-menu">
                     <button class="menu-button" type="button">Help</button>
                     <div class="dropdown-menu" id="help-dropdown">
-                        <button id="button-help-manual" type="button" disabled>Manual</button>
-                        <button id="button-help-about" type="button" disabled>About</button>
-                        <button id="button-help-version" type="button" disabled>Version 0.7.0</button>
+                        <!-- <button id="button-help-manual" type="button" disabled>Manual</button>
+                        <button id="button-help-about" type="button" disabled>About</button> -->
+                        <button id="button-help-version" type="button" disabled>Version 0.9.0</button>
                     </div>
                 </div>
             </div>
-            <div id="messages"><!--align to the right and display success and error messages--></div>
+            <div id="messages"></div>
         </div>
     </header>
 
@@ -115,11 +115,16 @@
             <div id="properties-faction-paint" class="tool-area" data-state="FACTION_PAINT">
                 <div class="tool-header">
                     <h2>Faction Paint</h2>
-                    <p class="tool-description">Choose a faction and presence to add to cells.</p>
+                    <p class="tool-description">Choose a faction and presence to add to cells.
+                        <br>Multiple factions can occupy the same cell.
+                        <br>Deselect all factions to erase.
+                    </p>
                 </div>
                 <hr>
-                <label for="faction-paint-amount">Presence to paint</label>
-                <input id="faction-paint-amount" type="number" min="0" step="1" value="100">
+                <div id="presence-paint">
+                    <label for="faction-paint-amount">Presence to paint</label>
+                    <input id="faction-paint-amount" type="number" min="0" step="1" value="100">
+                </div>
                 <hr>
                 <div id="faction-paint-list"></div>
                 <hr>
@@ -182,6 +187,7 @@
 
     <footer>
         &copy; 2026 Jeremy Barnes. All rights reserved.
+        <input type="file" id="map-file-input" accept=".json,application/json" hidden>
     </footer>
     <script src="scripts/app.js"></script>
     <script src="scripts/data.js"></script>

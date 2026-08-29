@@ -382,7 +382,7 @@ footer {
     position: relative;
 }
 .menu-button {
-    padding: 0 4px;
+    padding: 0.2rem 0.75rem;
     background: none;
     border: none;
     color: var(--text-color);
@@ -441,7 +441,7 @@ footer {
     overflow: hidden;
 }
 .message {
-    padding: 0.4rem 0.75rem;
+    padding: 0.2rem 0.5rem;
     border: 1px solid;
     border-radius: 4px;
     font-size: 14px;
@@ -678,6 +678,22 @@ footer {
     flex-shrink: 0;
     overflow: hidden;
 }
+
+/* ==================== Faction Paint ==================== */
+#presence-paint {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}
+#presence-paint > :first-child {
+    white-space: nowrap;
+}
+#presence-paint > :last-child {
+    flex: 1;
+    min-width: 0;
+}
+
 
 /* ==================== Terrain Paint ==================== */
 #terrain-paint-list {
