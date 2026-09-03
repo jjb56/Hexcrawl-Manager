@@ -95,14 +95,14 @@ let app = {
 			0: {
 				name: 'Forest',
 				background_color: '#047000',
-				icon: 'tree_oak',
+				icon: 'oak_tree',
 				icon_color: '#00be00',
 				roll_table_ids: []
 			},
 			2: {
 				name: 'Desert',
 				background_color: '#ebb400',
-				icon: 'tree_cactus',
+				icon: 'cactus',
 				icon_color: '#ffee8d',
 				roll_table_ids: [5]
 			}
@@ -165,45 +165,6 @@ let app = {
         }
     }
 };
-
-// Icon info
-const icon_list = [
-	{ id: "aaa_none", name: "Empty", src: "icons/empty.png", tags: ["all"] },
-	{ id: "tree_oak", name: "Oak Tree", src: "icons/oak.svg", tags: [] },
-	{ id: "tree_pine", name: "Pine Tree", src: "icons/pine-tree.svg" },
-	{ id: "tree_palm", name: "Palm Tree", src: "icons/palm-tree.svg" },
-	{ id: "tree_bamboo", name: "Bamboo Tree", src: "icons/bamboo.svg" },
-	{ id: "tree_cactus", name: "Cactus", src: "icons/cactus.svg" },
-	{ id: "tree_beech", name: "Beech Tree", src: "icons/beech.svg" },
-	{ id: "tree_dead", name: "Dead Tree",  src: "icons/dead-wood.svg" },
-	{ id: "agave", name: "Agave", src: "icons/agave.svg" },
-	{ id: "oasis", name: "Oasis", src: "icons/oasis.svg" },
-	{ id: "mountain", name: "Mountain", src: "icons/peaks.svg" },
-	{ id: "stones", name: "Stones", src: "icons/stone-pile.svg" },
-	{ id: "stalagtite", name: "Stalagtite", src: "icons/stalagtite.svg" },
-	{ id: "gargoyle", name: "Gargoyle", src: "icons/gargoyle.svg" },
-	{ id: "tools", name: "Tools", src: "icons/stone-crafting.svg" },
-	{ id: "wave", name: "Wave", src: "icons/big-wave.svg" },
-	{ id: "snowflake", name: "Snowflake", src: "icons/snowflake-1.svg" },
-	{ id: "skull", name: "Skull", src: "icons/death-skull.svg" },
-	{ id: "skull_crossbones", name: "Skull and Crossbones", src: "icons/skull-crossed-bones.svg" },
-	{ id: "skull_crossed_swords", name: "Skull and Crossed Swords", src: "icons/pirate-flag.svg" },
-	{ id: "skull_demon", name: "Demon Skull", src: "icons/daemon-skull.svg" },
-	{ id: "sun", name: "Sun", src: "icons/sun.svg" },
-	{ id: "moon", name: "Moon", src: "icons/moon.svg" },
-	{ id: "monolith", name: "Monolith", src: "icons/dolmen.svg" },
-	{ id: "island", name: "Island", src: "icons/island.svg" },
-	{ id: "waterfall", name: "Waterfall", src: "icons/waterfall.svg" },
-	{ id: "well", name: "Well", src: "icons/well.svg" },
-	{ id: "hole", name: "Hole", src: "icons/hole.svg" },
-	{ id: "castle", name: "Castle", src: "icons/castle.svg" },
-	{ id: "city", name: "City", src: "icons/medieval-gate.svg" },
-	{ id: "tower", name: "Tower", src: "icons/stone-tower.svg" },
-	{ id: "temple", name: "Temple", src: "icons/greek-temple.svg" },
-	{ id: "village", name: "Village", src: "icons/village.svg" },
-	{ id: "ruins", name: "Ruins", src: "icons/ancient-ruins.svg" },
-	{ id: "dungeon", name: "Dungeon", src: "icons/dungeon-gate.svg" }
-];
 
 //========================================================================================================================================
 //              Main Functions
