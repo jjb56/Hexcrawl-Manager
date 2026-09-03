@@ -90,12 +90,26 @@
                     <h2>Nothing Selected</h2>
                     <p class="tool-description">Select a hex or tool to display its properties here.</p>
                 </div>
+                <div class="tool-content">
+                    <hr>
+                    <h3>Hotkeys</h3>
+                    <p>ctrl<span class="faded">+</span>n to start a new world.</p>
+                    <p>ctrl<span class="faded">+</span>o to open a saved world.</p>
+                    <p>ctrl<span class="faded">+</span>s to save your world.</p>
+                    <p>ctrl<span class="faded">+</span>z to undo.</p>
+                    <p>ctrl<span class="faded">+</span>y to redo.</p>
+                    <p>ctrl<span class="faded">+</span>= or scroll up on the map to zoom in.</p>
+                    <p>ctrl<span class="faded">+</span>- or scroll down on the map to zoom out.</p>
+                    <p>ctrl<span class="faded">+</span>0 to reset the map view.</p>
+                    <br>
+                    <p>win<span class="faded">+</span>. (windows) or ctrl<span class="faded">+</span>cmd<span class="faded">+</span>space (mac) to open emoji window in text boxes.</p>
+                </div>
             </div>
 
             <!-- ===== State: EDIT_HEX ===== -->
             <div id="properties-hex-edit" class="tool-area" data-state="EDIT_HEX">
                 <div id="header-hex-edit" class="tool-header">
-                    <h2 id="header-hex-title">Region <span id="hex-coordinates"></span></h2>
+                    <input id="header-hex-title" type="text" placeholder="Region Name" maxlength="120">
                     <span id="hex-terrain-type">❌ No terrain ❌</span>
                     <textarea id="hex-description" placeholder="Enter a description for this region..."></textarea>
                 </div>

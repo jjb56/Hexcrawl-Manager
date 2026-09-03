@@ -19,6 +19,7 @@ function renderHexEditTool() {
     let data = app.data.map[hex_key];
     if (!data) {
         data = {
+            name: "",
             geography_id: null,
             description: ""
         };
@@ -28,9 +29,13 @@ function renderHexEditTool() {
     const owner_div = document.getElementById("properties-hex-edit");
     owner_div.innerHTML = "";
 
+    //render features
     renderHexEditBackground();
     renderHexHeader();
-    owner_div.appendChild(document.createElement("hr"));
+    const header_hr = document.createElement("hr");
+    header_hr.id = "header-hr";
+    //header_hr.style.cssText = "height: 3px; margin: 12px 0; border: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.95) 20%, rgba(255,255,255,.95) 80%, transparent); box-shadow: 0 0 0 1px rgba(0,0,0,.9), 0 0 0 2px rgba(255,255,255,.8), 0 0 10px rgba(255,255,255,.9);"
+    owner_div.appendChild(header_hr);
     if (data.cities) {
         renderHexCities();
         owner_div.appendChild(document.createElement("hr"));
@@ -113,15 +118,13 @@ function renderHexHeader() {
     header.id = "header-hex-edit";
     header.className = "tool-header";
 
-    const title = document.createElement("h2");
+    const title = document.createElement("input");
     title.id = "header-hex-title";
-
-    const coordinates = document.createElement("span");
-    coordinates.id = "hex-coordinates";
-    coordinates.textContent = `${x},${y}`;
-
-    title.textContent = "Region ";
-    title.appendChild(coordinates);
+    title.type = "text";
+    title.placeholder = `Region ${x},${y}`;
+    title.value = data.name || "";
+    title.maxLength = 120;
+    title.dataset.historyPath = `map.${app.selected_hex}.name`;
 
     const terrain = document.createElement("span");
     terrain.id = "hex-terrain-type";
@@ -130,16 +133,32 @@ function renderHexHeader() {
         const geography = app.data.geography[data.geography_id];
 
         if (geography) {
-            terrain.textContent = `${geography.icon} ${geography.name} ${geography.icon}`;
+            const icon_data = icon_list.find(item => item.id === geography.icon);
+            const terrain_text = `${geography.name}`;
+            if (icon_data) {
+                const create_icon = () => {
+                    const image = document.createElement("img");
+                    image.className = "hex-header-icon";
+                    image.style.backgroundColor = geography.icon_color;
+                    image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+                    return image;
+                };
+                terrain.appendChild(create_icon());
+                terrain.appendChild(document.createTextNode(geography.name));
+                terrain.appendChild(create_icon());
+            } else {
+                terrain.appendChild(document.createTextNode(geography.name));
+            }
         } else {
-            terrain.textContent = "❌ Unknown terrain ❌";
+            terrain.textContent = "Unknown terrain";
         }
     } else {
-        terrain.textContent = "❌ No terrain ❌";
+        terrain.textContent = "No terrain";
     }
 
     const description = document.createElement("textarea");
     description.id = "hex-description";
+    description.className = "textarea-row";
     description.placeholder = "Enter a description for this region...";
     description.value = data.description || "";
     description.dataset.historyPath = `map.${app.selected_hex}.description`;
@@ -172,10 +191,13 @@ function renderHexCities() {
     for (let i = 0; i < cities.length; i++) {
         const city = cities[i];
 
-        const row = document.createElement("div");
-        row.className = "hex-city-row";
+        const entry = document.createElement("div");
+        entry.className = "city-entry"
 
-        // City name
+        //title row
+        const title_row = document.createElement("div");
+        title_row.className = "split-70-20-10"
+
         const name = document.createElement("input");
         name.type = "text";
         name.className = "hex-city-name";
@@ -183,27 +205,44 @@ function renderHexCities() {
         name.value = city.name || "";
         name.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.name`;
 
-        // Population
-        const population = document.createElement("input");
-        population.type = "number";
-        population.className = "hex-city-population";
-        population.min = "0";
-        population.placeholder = "Population";
-        population.value = city.population ?? "";
-        population.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.population`;
+        const delete_city_button = document.createElement("button");
+        delete_city_button.className = "bad-button";
+        delete_city_button.textContent = "-";
+        delete_city_button.addEventListener("click", () => {
+            const hex_key = app.selected_hex;
+            const removed_city = app.data.map[hex_key].cities[i];
+            const do_action = () => {
+                const hex = app.data.map[hex_key];
+                hex.cities.splice(i, 1);
+                if (hex.cities.length === 0) delete hex.cities;
+            };
+            const undo_action = () => {
+                const hex = app.data.map[hex_key];
+                if (!hex.cities) hex.cities = [];
+                hex.cities.splice(i, 0, removed_city);
+            };
+
+            do_action();
+            commitToHistory(`Removed city from region ${hex_key}`, undo_action, do_action);
+            renderHexEditTool();
+        });
+
+        title_row.appendChild(name);
+        appendIconPicker(title_row, `map.${app.selected_hex}.cities.${i}.icon`);
+        title_row.appendChild(delete_city_button);
 
         // Description
         const description = document.createElement("textarea");
-        description.className = "hex-city-description";
+        description.className = "textarea-row";
         description.placeholder = "Enter city description...";
         description.value = city.description || "";
         description.dataset.historyPath = `map.${app.selected_hex}.cities.${i}.description`;
 
-        row.appendChild(name);
-        row.appendChild(population);
-        row.appendChild(description);
+        entry.appendChild(title_row);
+        //entry.appendChild(population_row);
+        entry.appendChild(description);
 
-        city_list.appendChild(row);
+        city_list.appendChild(entry);
     }
 
     section.appendChild(title);
@@ -242,9 +281,7 @@ function renderHexFactions() {
         // Faction flag
         const flag = document.createElement("span");
         flag.className = "hex-faction-flag";
-        flag.style.backgroundColor = faction?.color || "transparent";
-        flag.textContent = faction?.icon || "";
-        flag.title = faction?.name || "";
+        renderHexFactionFlag(flag, faction);
 
         // Faction selector
         const name = document.createElement("select");
@@ -269,9 +306,7 @@ function renderHexFactions() {
             const selected_id = name.value === "" ? null : Number(name.value);
             const selected_faction = selected_id === null ? null : app.data.factions[selected_id];
 
-            flag.style.backgroundColor = selected_faction?.color || "";
-            flag.textContent = selected_faction?.icon || "";
-            flag.title = selected_faction?.name || "";
+            renderHexFactionFlag(flag, selected_faction);
             remove.title = selected_faction ? `Remove ${selected_faction.name}` : "Remove faction";
         });
 
@@ -353,24 +388,13 @@ function renderHexLandmarks() {
     for (let i = 0; i < landmarks.length; i++) {
         const landmark = landmarks[i];
 
-        const row = document.createElement("div");
-        row.className = "hex-landmark-row";
+        const entry = document.createElement("div");
+        entry.className = "hex-landmark-entry";
 
-        // Icon selector
-        const icon = document.createElement("select");
-        icon.className = "hex-landmark-icon";
-        icon.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.icon`;
+        // title row
+        const title_row = document.createElement("div");
+        title_row.className = "split-70-20-10";
 
-        const none_option = document.createElement("option");
-        none_option.value = "";
-        none_option.textContent = "--";
-
-        icon.appendChild(none_option);
-
-        // Select the current icon.
-        icon.value = landmark.icon || "";
-
-        // Landmark name
         const name = document.createElement("input");
         name.type = "text";
         name.className = "hex-landmark-name";
@@ -378,18 +402,45 @@ function renderHexLandmarks() {
         name.value = landmark.name || "";
         name.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.name`;
 
-        // Landmark description
+        const delete_landmark_button = document.createElement("button");
+        delete_landmark_button.className = "bad-button";
+        delete_landmark_button.textContent = "-";
+        delete_landmark_button.addEventListener("click", () => {
+            const hex_key = app.selected_hex;
+            const removed_landmark = app.data.map[hex_key].landmarks[i];
+            const do_action = () => {
+                const hex = app.data.map[hex_key];
+                hex.landmarks.splice(i, 1);
+                if (hex.landmarks.length === 0) delete hex.landmarks;
+            };
+            const undo_action = () => {
+                const hex = app.data.map[hex_key];
+                if (!hex.landmarks) hex.landmarks = [];
+                hex.landmarks.splice(i, 0, removed_landmark);
+            };
+
+            do_action();
+            commitToHistory(`Removed landmark from region ${hex_key}`, undo_action, do_action);
+            renderHexEditTool();
+            renderHexes();
+        });
+        
+        title_row.appendChild(name);
+        appendIconPicker(title_row, `map.${app.selected_hex}.landmarks.${i}.icon`);
+        title_row.appendChild(delete_landmark_button);
+
+        //description row
         const description = document.createElement("textarea");
-        description.className = "hex-landmark-description";
+        description.className = "textarea-row";
         description.placeholder = "Enter landmark description...";
         description.value = landmark.description || "";
         description.dataset.historyPath = `map.${app.selected_hex}.landmarks.${i}.description`;
+        
+        //assemble row
 
-        row.appendChild(icon);
-        row.appendChild(name);
-        row.appendChild(description);
-
-        landmark_list.appendChild(row);
+        entry.appendChild(title_row);
+        entry.appendChild(description);
+        landmark_list.appendChild(entry);
     }
 
     section.appendChild(title);
@@ -441,17 +492,61 @@ function renderHexNotes() {
     note_list.id = "hex-notes-list";
 
     for (let i = 0; i < notes.length; i++) {
-        const row = document.createElement("div");
-        row.className = "hex-note-row";
+        if (typeof notes[i] === "string") {
+            notes[i] = { name: "", content: notes[i] };
+        }
+        const note = notes[i];
 
-        const note = document.createElement("textarea");
-        note.className = "hex-note";
-        note.placeholder = "Enter note...";
-        note.value = notes[i];
-        note.dataset.historyPath = `map.${app.selected_hex}.notes.${i}`;
+        const entry = document.createElement("div");
+        entry.className = "hex-note-entry";
 
-        row.appendChild(note);
-        note_list.appendChild(row);
+        // title row
+        const title_row = document.createElement("div");
+        title_row.className = "split-90-10";
+
+        const name = document.createElement("input");
+        name.type = "text";
+        name.className = "hex-note-name";
+        name.placeholder = "Note Title";
+        name.value = note.name || "";
+        name.dataset.historyPath = `map.${app.selected_hex}.notes.${i}.name`;
+
+        const delete_note_button = document.createElement("button");
+        delete_note_button.className = "bad-button";
+        delete_note_button.textContent = "-";
+        delete_note_button.addEventListener("click", () => {
+            const hex_key = app.selected_hex;
+            const removed_note = app.data.map[hex_key].notes[i];
+            const do_action = () => {
+                const hex = app.data.map[hex_key];
+                hex.notes.splice(i, 1);
+                if (hex.notes.length === 0) delete hex.notes;
+            };
+            const undo_action = () => {
+                const hex = app.data.map[hex_key];
+                if (!hex.notes) hex.notes = [];
+                hex.notes.splice(i, 0, removed_note);
+            };
+
+            do_action();
+            commitToHistory(`Removed note from region ${hex_key}`, undo_action, do_action);
+            renderHexEditTool();
+        });
+        
+        title_row.appendChild(name);
+        title_row.appendChild(delete_note_button);
+
+        //content row
+        const content = document.createElement("textarea");
+        content.className = "textarea-row";
+        content.placeholder = "Enter note...";
+        content.value = note.content || "";
+        content.dataset.historyPath = `map.${app.selected_hex}.notes.${i}.content`;
+        
+        //assemble row
+        entry.appendChild(title_row);
+        entry.appendChild(content);
+        note_list.appendChild(entry);
     }
 
     section.appendChild(title);
@@ -507,7 +602,6 @@ function renderHexAddFeature() {
     select.appendChild(landmark_option);
     select.appendChild(notes_option);
     select.appendChild(roll_table_option);
-
     select.addEventListener("change", () => {
         switch (select.value) {
             case "city": {
@@ -592,7 +686,10 @@ function renderHexAddFeature() {
             }
 
             case "notes": {
-                const note = "";
+                const note = {
+                    name: "",
+                    content: ""
+                };
                 let created_array = false;
 
                 const do_action = () => {
@@ -615,7 +712,10 @@ function renderHexAddFeature() {
             }
 
             case "roll_table":
+                const hex = app.data.map[app.selected_hex];
+                if (hex?.roll_table_ids === null || hex?.roll_table_ids === undefined) hex.roll_table_ids = [];
                 createRollTable("map", app.selected_hex);
+                console.log(`table ${hex.roll_table_ids}`);
                 break;
 
             default:
@@ -646,4 +746,25 @@ function renderHexCloseButton() {
     
 
     owner_div.appendChild(button);
+}
+
+/**
+ * Renders a faction flag with the faction's selected icon and colors.
+ * @param {HTMLElement} flag The flag element to update.
+ * @param {Object|null} faction The faction to render.
+ * @returns {void}
+ */
+function renderHexFactionFlag(flag, faction) {
+    flag.replaceChildren();
+    flag.style.backgroundColor = faction?.color || "transparent";
+    flag.title = faction?.name || "";
+
+    const icon_data = icon_list.find(item => item.id === faction?.icon);
+    if (!icon_data) return;
+
+    const image = document.createElement("img");
+    image.className = "icon-display";
+    image.style.backgroundColor = faction.icon_color;
+    image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+    flag.appendChild(image);
 }

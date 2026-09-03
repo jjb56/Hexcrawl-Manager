@@ -99,11 +99,24 @@ function renderTerrainList() {
         const button = document.createElement("button");
         button.className = "terrain-button";
 
-        const icon = document.createElement("span");
+        const icon = document.createElement("div");
         icon.className = "terrain-preview";
-        icon.textContent = terrain.icon;
         icon.style.backgroundColor = terrain.background_color;
-        icon.style.color = terrain.icon_color;
+        // icon.style.color = terrain.icon_color;
+
+        const icon_data = icon_list.find(item => item.id === terrain.icon);
+        const image = document.createElement("img");
+        image.className = "icon-display";
+        image.style.backgroundColor = terrain.icon_color;
+        image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+
+        // image.src = icon_data.src;
+        // image.alt = icon_data.name;
+        // image.style.backgroundColor = terrain.icon_color;
+        // image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+
+
+        icon.appendChild(image);
 
         const name = document.createElement("span");
         name.className = "terrain-label";
@@ -149,22 +162,73 @@ function renderTerrain(div_id, terrain_id) {
     const terrain = app.data.geography[terrain_id];
     const editor = document.createElement("div");
     editor.className = "terrain-editor";
-    editor.innerHTML = "";
-    editor.innerHTML = `
-        <div class="innerdiv">
-            <div class="split-25-75"><label>Name</label><input id="terrain-name-${terrain_id}" type="text" value="${terrain.name}" data-history-path="geography.${terrain_id}.name"></div>
-            <div class="split-50-50"><label>Background</label><input id="terrain-background-color-${terrain_id}" type="color" value="${terrain.background_color}" data-history-path="geography.${terrain_id}.background_color"></div>
-            <div class="split-50-50"><label>Icon</label><input id="terrain-icon-${terrain_id}" type="text" value="${terrain.icon}" data-history-path="geography.${terrain_id}.icon"></div>
-            <div class="split-50-50"><label>Icon Color</label><input id="terrain-icon-color-${terrain_id}" type="color" value="${terrain.icon_color}" data-history-path="geography.${terrain_id}.icon_color"></div>
-            <div id="roll-tables">
-                <h4>Roll Tables</h4>
-                <div id="terrain-roll-tables-${terrain_id}"></div>
-            </div>
-        </div>
-    `;
+
+    const inner_div = document.createElement("div");
+    inner_div.className = "innerdiv";
+
+    //name & background
+    const name_row = document.createElement("div");
+    name_row.className = "split-75-25";
+
+    const name = document.createElement("input");
+    name.id = `terrain-name${terrain_id}`;
+    name.type = "text";
+    name.value = terrain.name;
+    name.dataset.historyPath = `geography.${terrain_id}.name`;
+    name.defaultValue = "Terrain Name";
+
+    const background = document.createElement("input");
+    background.id = `terrain-background-color-${terrain_id}`;
+    background.type = "color";
+    background.value = terrain.background_color;
+    background.dataset.historyPath = `geography.${terrain_id}.background_color`;
+
+    name_row.appendChild(name);
+    name_row.appendChild(background);
+
+    //icon and icon color
+    const icon_row = document.createElement("div");
+    icon_row.className = "split-50-25-25";
+
+    const label = document.createElement("span");
+    label.textContent = "Terrain Icon";
+
+    const icon_color = document.createElement("input");
+    icon_color.id = `terrain-icon-color-${terrain_id}`;
+    icon_color.type = "color";
+    icon_color.value = terrain.icon_color;
+    icon_color.dataset.historyPath = `geography.${terrain_id}.icon_color`;
+
+    icon_row.appendChild(label);
+    appendIconPicker(icon_row, `geography.${terrain_id}.icon`);
+    icon_row.appendChild(icon_color);
+
+    //tables prep
+    const table_section = document.createElement("div");
+    table_section.id = "roll-tables";
+
+    const table_head = document.createElement("h4");
+    table_head.textContent = "Roll Tables";
+
+    const table_container = document.createElement("div");
+    table_container.id = `terrain-roll-tables-${terrain_id}`;
+
+    table_section.appendChild(table_head);
+    table_section.appendChild(table_container);
+
+    //assemble
+    const details = document.createElement("h4");
+    details.textContent = "Details";
+
+    inner_div.appendChild(details);
+    inner_div.appendChild(name_row);
+    inner_div.appendChild(icon_row);
+    inner_div.appendChild(table_section);
+    editor.appendChild(inner_div);
+    
+    //update roll tables
     const table_div = editor.querySelector(`#terrain-roll-tables-${terrain_id}`);
 
-    //roll tables
     const add_roll_table_button = document.createElement("button");
     add_roll_table_button.textContent = "+ Add Roll Table";
     add_roll_table_button.className = "good-button";

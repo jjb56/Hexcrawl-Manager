@@ -17,7 +17,8 @@ function addFactionType() {
     const faction_data = {
         name: "New Faction",
         color: "#4481b9",
-        icon: "?",
+        icon: "aaa_none",
+        icon_color: "#ffffff",
         roll_table_ids: []
     };
 
@@ -86,10 +87,17 @@ function renderFactionList() {
         const button = document.createElement("button");
         button.className = "faction-button";
 
-        const icon = document.createElement("span");
+        const icon = document.createElement("div");
         icon.className = "hex-faction-flag";
-        icon.textContent = faction.icon;
         icon.style.backgroundColor = faction.color;
+
+        const icon_data = icon_list.find(item => item.id === faction.icon);
+        const image = document.createElement("img");
+        image.className = "icon-display";
+        image.style.backgroundColor = faction.icon_color;
+        image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+
+        icon.appendChild(image);
 
         const name = document.createElement("span");
         name.className = "faction-label";
@@ -133,18 +141,73 @@ function renderFactionList() {
 function renderFaction(div_id, faction_id) {
     const faction = app.data.factions[faction_id];
     const editor = document.createElement("div");
-    editor.className = "faction-editor"; //FIXME
-    editor.innerHTML = `
-        <div class="innerdiv">
-            <div class="split-25-75"><label>Name</label><input id="faction-name-${faction_id}" type="text" value="${faction.name}" data-history-path="factions.${faction_id}.name"></div>
-            <div class="split-50-50"><label>faction color</label><input id="faction-color-${faction_id}" type="color" value="${faction.color}" data-history-path="factions.${faction_id}.color"></div>
-            <div class="split-50-50"><label>faction icon</label><input id="faction-icon-${faction_id}" type="text" value="${faction.icon}" data-history-path="factions.${faction_id}.icon"></div>
-            <div id="roll-tables">
-                <h4>Roll Tables</h4>
-                <div id="faction-roll-tables-${faction_id}"></div>
-            </div>
-        </div>
-    `;
+    editor.className = "faction-editor";
+    editor.innerHTML = "";
+
+    const inner_div = document.createElement("div");
+    inner_div.className = "innerdiv";
+
+    //name row
+    const name_row = document.createElement("div");
+    name_row.className = "split-75-25";
+
+    const name = document.createElement("input");
+    name.type = "text";
+    name.id = `faction-name-${faction_id}`;
+    name.value = faction.name;
+    name.dataset.historyPath = `factions.${faction_id}.name`;
+
+    const bg_color = document.createElement("input");
+    bg_color.type = "color";
+    bg_color.id = `faction-flag-color-${faction_id}`;
+    bg_color.value = faction.color;
+    bg_color.dataset.historyPath = `factions.${faction_id}.color`;
+
+    name_row.appendChild(name);
+    name_row.appendChild(bg_color);
+
+    //flag row
+    const flag_row = document.createElement("div");
+    flag_row.className = "split-50-25-25";
+
+    const flag_text = document.createElement("span");
+    flag_text.textContent = "Flag Details";
+
+    const icon = document.createElement("input");
+    icon.id = `faction-color-${faction_id}`;
+    icon.type = "color";
+    icon.value = faction.icon_color;
+    icon.dataset.historyPath = `factions.${faction_id}.icon_color`;
+
+    flag_row.appendChild(flag_text);
+    appendIconPicker(flag_row, `factions.${faction_id}.icon`);
+    flag_row.appendChild(icon);
+
+    //tables
+    const table_section = document.createElement("div");
+    table_section.id = "roll-tables";
+
+    const table_head = document.createElement("h4");
+    table_head.textContent = "Roll Tables";
+
+    const table_container = document.createElement("div");
+    table_container.id = `faction-roll-tables-${faction_id}`;
+
+    table_section.appendChild(table_head);
+    table_section.appendChild(table_container);
+
+    //assemble
+    const details = document.createElement("h4");
+    details.textContent = "Details";
+
+    inner_div.appendChild(details);
+    inner_div.appendChild(name_row);
+    inner_div.appendChild(flag_row);
+    inner_div.appendChild(table_section)
+    editor.appendChild(inner_div);
+
+
+    //roll tables
     const table_div = editor.querySelector(`#faction-roll-tables-${faction_id}`);
 
     const add_roll_table_button = document.createElement("button");

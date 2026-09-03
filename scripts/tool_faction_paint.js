@@ -24,7 +24,7 @@ function paintFaction(hex_key) {
         if (!hex?.factions?.length) return;
         delete hex.factions;
     } else {
-        const target_hex = hex ?? { geography_id: null, description: "" };
+        const target_hex = hex ?? { name: "", geography_id: null, description: "" };
         if (!hex) app.data.map[hex_key] = target_hex;
         target_hex.factions ??= [];
         const faction = target_hex.factions.find(item => item.faction_id === app.faction_painting);
@@ -104,10 +104,18 @@ function renderFactionPaintList() {
         button.className = "faction-paint-button";
         button.style.backgroundColor = darkenFactionColor(faction.color);
         button.title = faction.name;
-        const flag = document.createElement("span");
+        const flag = document.createElement("div");
         flag.className = "hex-faction-flag";
-        flag.textContent = faction.icon;
         flag.style.backgroundColor = faction.color;
+        //flag.textContent = faction.icon;
+
+        const icon_data = icon_list.find(item => item.id === faction.icon);
+        const image = document.createElement("img");
+        image.className = "icon-display";
+        image.style.backgroundColor = faction.icon_color;
+        image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+        flag.appendChild(image);
+
         button.appendChild(flag);
         button.appendChild(document.createTextNode(faction.name));
         if (app.faction_painting === Number(key)) button.classList.add("selected");

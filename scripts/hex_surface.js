@@ -19,7 +19,6 @@ map_camera = {
     start_camera_y: 0
 };
 
-
 renderHexes();
 setupMapCamera();
 updateMapSurfaceSize();
@@ -28,12 +27,26 @@ applyMapCamera();
 //========================================================================================================================================
 //              Main Functions
 //========================================================================================================================================
+/**
+ * Selects a hex and opens the HEX editing tool.
+ * @param {string} hex_key The string containing the x and y map coordinates of the cell.
+ * @returns {void}
+ */
+function selectHex(hex_key) {
+    if (app.current_tool === tools.TERRAIN_PAINT || app.current_tool === tools.FACTION_PAINT || app.is_painting) return;
+
+    app.selected_hex = hex_key;
+    renderHexSelection(hex_key);
+    app.current_tool = "HEX_EDIT";
+    activateTool("HEX_EDIT");
+}
 
 //========================================================================================================================================
 //              Render Functions
 //========================================================================================================================================
 /**
- * 
+ * Renders all hexes on the map.
+ * @returns {void}
  */
 function renderHexes() {
     const config = app.data.hex_configuration;
@@ -64,10 +77,9 @@ function renderHexes() {
     if (map_camera) applyMapCamera();
 }
 
-
 /**
- * 
- * @returns 
+ * Gets the map surface element.
+ * @returns {HTMLElement|null}
  */
 function getMapSurface() {
     return document.getElementById("hex-map-surface");
@@ -75,8 +87,8 @@ function getMapSurface() {
 
 
 /**
- * 
- * @returns 
+ * Gets the bounds of the map surface.
+ * @returns {Object} The width and height of the map bounds.
  */
 function getMapBounds() {
     const config = app.data.hex_configuration;
@@ -107,8 +119,8 @@ function getMapBounds() {
 
 
 /**
- * 
- * @returns 
+ * Updates the size of the map surface based on its bounds.
+ * @returns {void}
  */
 function updateMapSurfaceSize() {
     const surface = getMapSurface();
@@ -121,8 +133,8 @@ function updateMapSurfaceSize() {
 
 
 /**
- * 
- * @returns 
+ * Gets the limits of the map camera based on the map area and bounds.
+ * @returns {Object} The minimum and maximum x and y coordinates for the camera.
  */
 function getCameraLimits() {
     const map_area = document.getElementById("map-area");
@@ -142,7 +154,7 @@ function getCameraLimits() {
 
 
 /**
- * 
+ * Clamps the map camera position within the calculated limits.
  */
 function clampMapCamera() {
     const limits = getCameraLimits();
@@ -152,8 +164,8 @@ function clampMapCamera() {
 
 
 /**
- * 
- * @returns 
+ * Applies the current map camera position and scale to the map surface.
+ * @returns {void}
  */
 function applyMapCamera() {
     const surface = getMapSurface();
@@ -165,11 +177,11 @@ function applyMapCamera() {
 
 
 /**
- * 
- * @param {*} next_scale 
- * @param {*} focus_x 
- * @param {*} focus_y 
- * @returns 
+ * Sets the zoom level of the map.
+ * @param {number} next_scale 
+ * @param {number} focus_x 
+ * @param {number} focus_y 
+ * @returns {void}
  */
 function setMapZoom(next_scale, focus_x = null, focus_y = null) {
     const map_area = document.getElementById("map-area");
@@ -194,7 +206,7 @@ function setMapZoom(next_scale, focus_x = null, focus_y = null) {
 
 
 /**
- * 
+ * Zooms the map in.
  */
 function zoomMapIn() {
     setMapZoom(map_camera.scale * 1.2, ...getMapZoomFocus());
@@ -202,7 +214,7 @@ function zoomMapIn() {
 
 
 /**
- * 
+ * Zooms the map out.
  */
 function zoomMapOut() {
     setMapZoom(map_camera.scale / 1.2, ...getMapZoomFocus());
@@ -210,8 +222,8 @@ function zoomMapOut() {
 
 
 /**
- * 
- * @returns 
+ * Gets the focus point for zooming.
+ * @returns {Array<number>} The x and y coordinates for the zoom focus.
  */
 function getMapZoomFocus() {
     const map_area = document.getElementById("map-area");
@@ -223,7 +235,8 @@ function getMapZoomFocus() {
 
 
 /**
- * 
+ * Resets the map zoom to the default level.
+ * @returns {void}
  */
 function resetMapZoom() {
     map_camera.scale = 1;
@@ -234,8 +247,8 @@ function resetMapZoom() {
 
 
 /**
- * 
- * @returns 
+ * Checks if a form element is currently active.
+ * @returns {boolean} True if a form element is active, false otherwise.
  */
 function isFormElementActive() {
     const active_element = document.activeElement;
@@ -243,42 +256,9 @@ function isFormElementActive() {
 }
 
 
-document.addEventListener("keydown", event => {
-    if (event.isComposing || isFormElementActive()) return;
-
-    const command_key = event.ctrlKey || event.metaKey;
-    if (command_key && event.key.toLowerCase() === "z") {
-        const handled = event.shiftKey ? redo() : undo();
-        if (handled) event.preventDefault();
-        return;
-    }
-    if (command_key && event.key.toLowerCase() === "y") {
-        if (redo()) event.preventDefault();
-        return;
-    }
-
-    switch (event.key) {
-        case "=":
-            zoomMapIn();
-            event.preventDefault();
-            break;
-        case "-":
-            zoomMapOut();
-            event.preventDefault();
-            break;
-        case "0":
-            resetMapZoom();
-            event.preventDefault();
-            break;
-        default:
-            break;
-    }
-});
-
-
 /**
- * 
- * @returns 
+ * Sets up the map camera.
+ * @returns {void}
  */
 function setupMapCamera() {
     const map_area = document.getElementById("map-area");
@@ -287,7 +267,7 @@ function setupMapCamera() {
     map_area.addEventListener("contextmenu", event => event.preventDefault());
     map_area.addEventListener("click", event => {
         if (event.target.closest(".hex")) return;
-        if (app.current_tool === tools.TERRAIN_PAINT || app.current_tool === tools.FACTION_PAINT) return;
+        if (app.current_tool !== tools.HEX_EDIT) return;
         activateTool(tools.NONE);
     });
     map_area.addEventListener("wheel", event => {
@@ -360,19 +340,7 @@ function renderHexHover(hex_key) {
     }
 }
 
-/**
- * Selects a hex and opens the HEX editing tool.
- * @param {string} hex_key The string containing the x and y map coordinates of the cell.
- * @returns {void}
- */
-function selectHex(hex_key) {
-    if (app.current_tool === tools.TERRAIN_PAINT || app.current_tool === tools.FACTION_PAINT || app.is_painting) return;
 
-    app.selected_hex = hex_key;
-    renderHexSelection(hex_key);
-    app.current_tool = "HEX_EDIT";
-    activateTool("HEX_EDIT");
-}
 
 /**
  * Renders the selection border around a single hex.
@@ -474,35 +442,62 @@ function renderHexTerrain(hex_key) {
 }
 
 /**
- * Renders the geography icon of a single hex cell.
+ * Renders the geography icon of a single hex cell, or renders the icon of the city if the hex contains a city.
  * @param {string} hex_key The string containing the x and y map coordinates of the cell.
  * @returns {void}
  */
 function renderHexIcon(hex_key) {
     const hex = document.querySelector(`[data-hex-key="${hex_key}"]`);
     const hex_data = app.data.map[hex_key];
+    if (!hex) return;
+
+    // choose proper image
+    //set default image
+    let image = "aaa_none";
+    //set image to geography icon
+    const has_geography = hex_data?.geography_id !== undefined && hex_data?.geography_id !== null;
+    const geography = has_geography ? app.data.geography[hex_data.geography_id] : null;
+    if (geography?.icon) {
+        image = geography.icon;
+    }
+    //set image to first landmark with image
+    const landmark = hex_data?.landmarks?.find(landmark => landmark.icon && landmark.icon !== "aaa_none");
+    const has_landmark_icon = Boolean(landmark);
+    if (landmark) {
+        image = landmark.icon;
+    }
+    //overwrite image with city icon
+    const city = hex_data?.cities?.[0];
+    const has_city_icon = Boolean(city?.icon && city.icon !== "aaa_none");
+    if (has_city_icon) {
+        image = city.icon;
+    }
+    //set color
+    const color = has_city_icon || has_landmark_icon ? "#000000" : (geography?.icon_color || "#000000");
+
+    // cancel if no icon
+    const icon_data = getIconPath(image);
+    if (!icon_data || image === "aaa_none") return;
+
+    //prep the icon area
+    const shape_width = hex.offsetWidth;
+    const shape_height = hex.offsetHeight;
+    const icon_size = Math.max(shape_width, shape_height) * 0.5;
+
+    //create the icon holder
     let icon = hex.querySelector(".hex-icon");
-
-    if (!hex_data || hex_data.geography_id === undefined) {
-        if (icon) icon.remove();
-        return;
-    }
-
-    const geography = app.data.geography[hex_data.geography_id];
-
-    if (!geography || !geography.icon) {
-        if (icon) icon.remove();
-        return;
-    }
-
     if (!icon) {
         icon = document.createElement("span");
         icon.classList.add("hex-icon");
         hex.appendChild(icon);
     }
-
-    icon.textContent = geography.icon;
-    icon.style.color = geography.icon_color;
+    icon.classList.add("geography-icon");
+    icon.textContent = "";
+    icon.style.backgroundColor = color;
+    icon.style.mask = `url(${icon_data}) center / contain no-repeat`;
+    icon.style.webkitMask = `url(${icon_data}) center / contain no-repeat`;
+    icon.style.width = `${icon_size}px`;
+    icon.style.height = `${icon_size}px`;
     icon.style.opacity = app.data.hex_configuration.icon_alpha;
 }
 
@@ -908,12 +903,47 @@ function renderHex(hex_key) {
 }
 
 //========================================================================================================================================
+//              Event Listeners
+//========================================================================================================================================
+document.addEventListener("keydown", event => {
+    if (event.isComposing || isFormElementActive()) return;
+
+    const command_key = event.ctrlKey || event.metaKey;
+    if (command_key && event.key.toLowerCase() === "z") {
+        const handled = event.shiftKey ? redo() : undo();
+        if (handled) event.preventDefault();
+        return;
+    }
+    if (command_key && event.key.toLowerCase() === "y") {
+        if (redo()) event.preventDefault();
+        return;
+    }
+
+    switch (event.key) {
+        case "=":
+            zoomMapIn();
+            event.preventDefault();
+            break;
+        case "-":
+            zoomMapOut();
+            event.preventDefault();
+            break;
+        case "0":
+            resetMapZoom();
+            event.preventDefault();
+            break;
+        default:
+            break;
+    }
+});
+
+//========================================================================================================================================
 //              Helper Functions
 //========================================================================================================================================
 /**
- * 
- * @param {*} config 
- * @returns 
+ * Calculates the dimensions of a hex cell based on its configuration.
+ * @param {Object} config The configuration object for the hex cell.
+ * @returns {Object} An object containing the width and height of the hex cell.
  */
 function getHexDimensions(config) {
     const shape_key = config.shape.replace("-", "_");
@@ -928,11 +958,11 @@ function getHexDimensions(config) {
 }
 
 /**
- * 
- * @param {*} shape 
- * @param {*} width 
- * @param {*} height 
- * @returns 
+ * Calculates the points of the polygon for a hex cell based on its shape and dimensions.
+ * @param {string} shape The shape of the hex cell.
+ * @param {number} width The width of the hex cell.
+ * @param {number} height The height of the hex cell.
+ * @returns {string} A string containing the points for the hex cell's polygon.
  */
 function getHexPolygonPoints(shape, width, height) {
     switch (shape) {

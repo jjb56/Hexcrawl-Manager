@@ -14,7 +14,7 @@ document.addEventListener("change", event => {
 
     //actions
     const do_action = () => {
-        setDataFromHistoryPath(path, new_value);
+        setDataFromHistoryPath(path, new_value); 
         conditionalRenders(path);
     };
     const undo_action = () => { 
@@ -105,6 +105,7 @@ function getHistoryActionName(path) {
         const hex = path[1];
         if (path.length >= 3) { // data.map["3,5"].description
             const names = {
+                name: "name",
                 geography_id: "geography",
                 description: "description",
                 cities: "city",
@@ -155,7 +156,11 @@ function getHistoryActionName(path) {
 function conditionalRenders(path) {
     if (path.startsWith("geography.") && /\.(name|background_color|icon|icon_color)$/.test(path)) renderHexes();
     if (path.startsWith("factions.") && /\.(name|color|icon)$/.test(path)) renderHexes();
-    if (path.includes(".factions.") && path.endsWith(".faction_id")) refreshFactionBorderNeighbors(app.selected_hex);
+    if (path.startsWith("map.") && /\.cities\.\d+\.icon$/.test(path)) renderHexes();
+    if (path.startsWith("map.") && /\.landmarks\.\d+\.icon$/.test(path)) renderHexes();
+    if (path.startsWith("geography.") && path.endsWith(".icon")) renderTerrainList();
+    if (path.startsWith("factions.") && path.endsWith(".icon")) renderFactionList();
+    if (path.includes(".factions.") && path.endsWith(".faction_id")) refreshFactionBorderNeighbors(app.selected_hex);    
 
     //hex configuration
     if (path.startsWith("hex_configuration.")) {
@@ -200,6 +205,7 @@ function setDataFromHistoryPath(path, value) {
  * @returns {*} The value of the form element.
  */
 function getFormValue(element) {
+    if (element.classList.contains("icon-picker")) return element.dataset.value;
     if (element.type === "checkbox") return element.checked;
     if (element.type === "number") return Number(element.value);
     if (element.dataset.valueType === "number") return element.value === "" ? null : Number(element.value);
@@ -271,7 +277,8 @@ function createRollTable(current_tool, owner_id) {
 
     //execute actions
     do_action();
-    commitToHistory(`Added roll table to ${app.data[current_tool][owner_id].name}`, undo_action, do_action);
+    const location_to_add = app.data[current_tool][owner_id]?.name || `Region ${app.selected_hex}`;
+    commitToHistory(`Added roll table to ${location_to_add}`, undo_action, do_action);
 }
 
 /**
@@ -520,6 +527,16 @@ function setNestedValue(object, path, value) {
     const final_key = keys.pop();
     const target = keys.reduce((current, key) => current[key], object);
     target[final_key] = value;
+}
+
+/**
+ * Determines if a given URL points to an image.
+ * @param {string} url The URL to check.
+ * @returns {boolean} True if the URL points to an image, false otherwise.
+ */
+function isImageURL(url) {
+    if (typeof url !== 'string') return false;
+    return url.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) != null || url.startsWith('http');
 }
 
 //========================================================================================================================================

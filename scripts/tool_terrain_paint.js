@@ -22,6 +22,7 @@ function paintTerrain(hex_key) {
 
     if (!app.data.map[hex_key]) {
         app.data.map[hex_key] = {
+            name: "",
             geography_id: null,
             description: ""
         }
@@ -40,6 +41,7 @@ function paintTerrain(hex_key) {
 function setTerrainPaintHex(hex_id, terrain_id) {
     if (!app.data.map[hex_id]) {
         app.data.map[hex_id] = {
+            name: "",
             geography_id: null,
             description: ""
         };
@@ -136,9 +138,12 @@ function renderTerrainPaintList() {
             }
         };
 
-        const iconParagraph = document.createElement("p");
-        iconParagraph.textContent = terrain.icon;
-        box.appendChild(iconParagraph);
+        const icon_data = icon_list.find(item => item.id === terrain.icon);
+        const image = document.createElement("img");
+        image.className = "paint-icon";
+        image.style.backgroundColor = terrain.icon_color;
+        image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+        box.appendChild(image);
         
         const nameParagraph = document.createElement("p");
         nameParagraph.textContent = terrain.name;
