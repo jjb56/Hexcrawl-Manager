@@ -44,6 +44,7 @@ let app = {
 		square: [95, 95]
 	},
     data: { //reset before use: next_id to 0, empty map, geography, roll_tables, and factions
+		data_structure_version: 1, //Change this and creeate a migration when altering the data or how it holds info.
         next_id: 6,
 		party_hex: null,
         map: {  
@@ -275,7 +276,7 @@ function renderCurrentTool() {
  * @param {string} parent_div The div to append the icon picker to
  * @param {string} history_path The path in the app.data object where the selected icon will be stored. For example, "map.3,5.landmarks.0.icon"
  */
-function appendIconPicker(parent_div,history_path) {
+function appendIconPicker(parent_div, history_path) {
 	//button area
 	const picker = document.createElement("div");
     picker.className = "icon-picker";
@@ -330,7 +331,45 @@ function appendIconPicker(parent_div,history_path) {
 
 	//open/close
 	button.addEventListener("click", () => {
-		dropdown.classList.toggle("open");
+		if (dropdown.classList.contains("open")) {
+			dropdown.classList.remove("open");
+			dropdown.classList.remove("open-above");
+			return;
+		}
+
+		// Open it so we can measure it
+		dropdown.classList.add("open");
+
+		const aside = picker.closest("aside");
+
+		if (aside) {
+			const aside_rect = aside.getBoundingClientRect();
+			const picker_rect = picker.getBoundingClientRect();
+
+			const dropdown_width = dropdown.offsetWidth;
+
+			// Center of the aside, relative to the picker
+			const aside_center = aside_rect.left + aside_rect.width / 2;
+
+			// Position dropdown so its center is at aside_center
+			const dropdown_left =
+				aside_center - picker_rect.left - dropdown_width / 2;
+
+			dropdown.style.left = `${dropdown_left}px`;
+		}
+
+		// Determine whether it should open above or below
+		const button_rect = button.getBoundingClientRect();
+		const dropdown_rect = dropdown.getBoundingClientRect();
+
+		const space_below = window.innerHeight - button_rect.bottom;
+		const space_above = button_rect.top;
+
+		if (space_below < dropdown_rect.height && space_above > space_below) {
+			dropdown.classList.add("open-above");
+		} else {
+			dropdown.classList.remove("open-above");
+		}
 	});
 
 	//initialize

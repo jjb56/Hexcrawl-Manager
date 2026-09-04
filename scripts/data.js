@@ -238,6 +238,7 @@ function showMessage(string, is_success) {
 }
 
 function getMapJSON() {
+    app.data.version = CURRENT_DATA_VERSION;
     return JSON.stringify(app.data, null, 4);
 }
 
@@ -776,3 +777,37 @@ function renderFileName() {
     }
 }
 renderFileName();
+
+//========================================================================================================================================
+//              Data Migration
+//========================================================================================================================================
+const CURRENT_DATA_VERSION = app.data.data_structure_version;
+
+function migrateData(data) {
+    // Old files have no version number
+    let version = data.version ?? 0;
+
+    while (version < CURRENT_DATA_VERSION) {
+        if (version === 0) {
+            data = migrateV0ToV1(data);
+            version = 1;
+        }
+        // Future migrations go here:
+        // if (version === 1) {
+        //     data = migrateV1ToV2(data);
+        //     version = 2;
+        // }
+        // if (version === 2) {
+        //     data = migrateV2ToV3(data);
+        //     version = 3;
+        // }
+    }
+
+    data.version = CURRENT_DATA_VERSION;
+
+    return data;
+}
+
+// function migrateV1ToV2(data) {
+
+// }

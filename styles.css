@@ -182,25 +182,26 @@ button:active:not(:disabled) {
     margin-left: 8px;
     font-size: 10px;
 }
-/* Dropdown */
 .icon-picker-dropdown {
     display: none;
     position: absolute;
     z-index: 1000;
     top: 100%;
-    left: auto;
-    right: 0;
     width: 240px;
     max-height: 240px;
     overflow-y: auto;
     box-sizing: border-box;
     background-color: var(--form-bg-color);
-    border: 1px solid var(--form-border-color);
+    border: 1px solid var(--selected-border-color);
     border-radius: 4px;
     padding: 8px;
 }
 .icon-picker-dropdown.open {
     display: block;
+}
+.icon-picker-dropdown.open-above {
+    top: auto;
+    bottom: 100%;
 }
 .icon-picker-grid {
     display: grid;

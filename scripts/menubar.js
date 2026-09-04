@@ -8,6 +8,7 @@
 //========================================================================================================================================
 // File - New
 function newMap() {
+    if (!confirmUnsavedChanges()) return;
     let new_data = {
         next_id: 0,
         party_hex: null,
@@ -50,6 +51,7 @@ document.querySelector("#button-file-new").addEventListener("click", newMap);
 
 // File - Open
 function openMap() {
+    if (!confirmUnsavedChanges()) return;
     //used the hidden file selector at the bottom of the page
     document.getElementById("map-file-input").click();
 }
@@ -60,7 +62,8 @@ document.getElementById("map-file-input").addEventListener("change", function(ev
     const reader = new FileReader();
     reader.onload = function(event) {
         try {
-            const data = JSON.parse(event.target.result);
+            let data = JSON.parse(event.target.result);
+            data = migrateData(data);
             app.data = data;
             app.document.name = file.name;
             app.document.has_unsaved_changes = false;
@@ -265,3 +268,20 @@ function closeAllMenus() {
     menus.forEach(menu => menu.classList.remove("show"));
     menuButtons.forEach(btn => btn.classList.remove("active-button"));
 }
+
+//========================================================================================================================================
+//              Helper Functions
+//========================================================================================================================================
+//confirm unsaved exit
+function confirmUnsavedChanges() {
+    if (!app.document.has_unsaved_changes) {
+        return true;
+    }
+    return confirm("You have unsaved changes. Continue without saving?");
+}
+window.addEventListener("beforeunload", function (event) {
+    if (app.document.has_unsaved_changes) {
+        event.preventDefault();
+        //event.returnValue = "";
+    }
+});

@@ -108,12 +108,7 @@ function renderTerrainList() {
         const image = document.createElement("img");
         image.className = "icon-display";
         image.style.backgroundColor = terrain.icon_color;
-        image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
-
-        // image.src = icon_data.src;
-        // image.alt = icon_data.name;
-        // image.style.backgroundColor = terrain.icon_color;
-        // image.style.mask = `url(${icon_data.src}) center / contain no-repeat`;
+        image.style.mask = `url(${getIconPath(terrain.icon)}) center / contain no-repeat`;
 
 
         icon.appendChild(image);
